@@ -54,6 +54,17 @@ const ProfileScreen = () => {
   const highlightLongPressTriggered = useRef(false);
   const [highlightVersion, setHighlightVersion] = useState(0);
 
+  // Show/hide highlights toggle
+  const [showHighlights, setShowHighlights] = useState(() => {
+    const saved = localStorage.getItem('showHighlights');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const toggleHighlights = useCallback((val: boolean) => {
+    setShowHighlights(val);
+    localStorage.setItem('showHighlights', String(val));
+  }, []);
+
   // Highlight viewer state
   const [highlightViewerOpen, setHighlightViewerOpen] = useState(false);
   const [viewingHighlightIndex, setViewingHighlightIndex] = useState(0);
@@ -735,55 +746,57 @@ const ProfileScreen = () => {
       </div>
 
       {/* Highlights */}
-      <div className="flex gap-3 overflow-x-auto px-4 py-3 hide-scrollbar">
-        {/* Hidden file input for highlights */}
-        <input
-          ref={highlightFileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            handleHighlightFileUpload(e);
-            // If it's a new highlight, open modal after file selected
-            if (editingHighlightIndex === -1) {
-              // Modal will open from the callback
-            }
-          }}
-        />
-        <button onClick={handleAddHighlight} className="flex flex-col items-center gap-1 min-w-[72px]">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-[1.5px] border-foreground/50">
-            <Plus size={30} className="text-foreground" strokeWidth={1.2} />
-          </div>
-          <span className="text-[11px] text-foreground">New</span>
-        </button>
-        {highlights.map((h, idx) => (
-          <div
-            key={`${h.name}-${idx}`}
-            className={cn("flex flex-col items-center gap-1 min-w-[72px] select-none cursor-pointer", pressingHighlight === idx && "scale-95 transition-transform")}
-            style={{ WebkitTouchCallout: "none" } as React.CSSProperties}
-            onContextMenu={(e) => e.preventDefault()}
-            onTouchStart={() => startHighlightPress(idx)}
-            onTouchEnd={endHighlightPress}
-            onTouchCancel={endHighlightPress}
-            onMouseDown={() => startHighlightPress(idx)}
-            onMouseUp={endHighlightPress}
-            onMouseLeave={endHighlightPress}
-            onClick={() => {
-              if (highlightLongPressTriggered.current) {
-                highlightLongPressTriggered.current = false;
-                return;
+      {showHighlights && (
+        <div className="flex gap-3 overflow-x-auto px-4 py-3 hide-scrollbar">
+          {/* Hidden file input for highlights */}
+          <input
+            ref={highlightFileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              handleHighlightFileUpload(e);
+              // If it's a new highlight, open modal after file selected
+              if (editingHighlightIndex === -1) {
+                // Modal will open from the callback
               }
-              setViewingHighlightIndex(idx);
-              setHighlightViewerOpen(true);
             }}
-          >
-            <div className="h-[72px] w-[72px] rounded-full overflow-hidden border-[1.5px] border-foreground/30 p-[2px]">
-              <img src={h.image} alt={h.name} className="h-full w-full rounded-full object-cover pointer-events-none" draggable={false} />
+          />
+          <button onClick={handleAddHighlight} className="flex flex-col items-center gap-1 min-w-[72px]">
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-[1.5px] border-foreground/50">
+              <Plus size={30} className="text-foreground" strokeWidth={1.2} />
             </div>
-            <span className="text-[11px] text-foreground max-w-[72px] truncate">{h.name}</span>
-          </div>
-        ))}
-      </div>
+            <span className="text-[11px] text-foreground">New</span>
+          </button>
+          {highlights.map((h, idx) => (
+            <div
+              key={`${h.name}-${idx}`}
+              className={cn("flex flex-col items-center gap-1 min-w-[72px] select-none cursor-pointer", pressingHighlight === idx && "scale-95 transition-transform")}
+              style={{ WebkitTouchCallout: "none" } as React.CSSProperties}
+              onContextMenu={(e) => e.preventDefault()}
+              onTouchStart={() => startHighlightPress(idx)}
+              onTouchEnd={endHighlightPress}
+              onTouchCancel={endHighlightPress}
+              onMouseDown={() => startHighlightPress(idx)}
+              onMouseUp={endHighlightPress}
+              onMouseLeave={endHighlightPress}
+              onClick={() => {
+                if (highlightLongPressTriggered.current) {
+                  highlightLongPressTriggered.current = false;
+                  return;
+                }
+                setViewingHighlightIndex(idx);
+                setHighlightViewerOpen(true);
+              }}
+            >
+              <div className="h-[72px] w-[72px] rounded-full overflow-hidden border-[1.5px] border-foreground/30 p-[2px]">
+                <img src={h.image} alt={h.name} className="h-full w-full rounded-full object-cover pointer-events-none" draggable={false} />
+              </div>
+              <span className="text-[11px] text-foreground max-w-[72px] truncate">{h.name}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Highlight Edit Modal */}
       {highlightEditOpen && (
@@ -903,7 +916,7 @@ const ProfileScreen = () => {
         </div>
       )}
 
-      <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} profile={profile} storyNote={account.storyNote} category={account.category} postsDisplay={account.postsDisplay} followersDisplay={account.followersDisplay} followingDisplay={account.followingDisplay} onSave={handleSave} />
+      <EditProfileModal isOpen={editOpen} onClose={() => setEditOpen(false)} profile={profile} storyNote={account.storyNote} category={account.category} postsDisplay={account.postsDisplay} followersDisplay={account.followersDisplay} followingDisplay={account.followingDisplay} onSave={handleSave} showHighlights={showHighlights} onToggleHighlights={toggleHighlights} />
 
       {/* Reel Edit Modal */}
       <ReelEditModal

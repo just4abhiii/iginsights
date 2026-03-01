@@ -39,9 +39,11 @@ interface EditProfileModalProps {
     followersDisplay?: string;
     followingDisplay?: string;
   }) => void;
+  showHighlights?: boolean;
+  onToggleHighlights?: (val: boolean) => void;
 }
 
-const EditProfileModal = ({ isOpen, onClose, profile, storyNote: initialStoryNote, category: initialCategory, postsDisplay: initialPostsDisplay, followersDisplay: initialFollowersDisplay, followingDisplay: initialFollowingDisplay, onSave }: EditProfileModalProps) => {
+const EditProfileModal = ({ isOpen, onClose, profile, storyNote: initialStoryNote, category: initialCategory, postsDisplay: initialPostsDisplay, followersDisplay: initialFollowersDisplay, followingDisplay: initialFollowingDisplay, onSave, showHighlights, onToggleHighlights }: EditProfileModalProps) => {
   const [fullName, setFullName] = useState(profile.fullName);
   const [username, setUsername] = useState(profile.username);
   const [bio, setBio] = useState(profile.bio);
@@ -236,6 +238,19 @@ const EditProfileModal = ({ isOpen, onClose, profile, storyNote: initialStoryNot
               {showCategory && (
                 <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Public Figure" className="h-10" />
               )}
+            </div>
+            {/* Highlights Toggle */}
+            <div>
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-muted-foreground">Show Highlights</label>
+                <button
+                  onClick={() => onToggleHighlights?.(!showHighlights)}
+                  className={`w-[40px] h-[22px] rounded-full transition-colors ${showHighlights ? 'bg-[hsl(var(--ig-blue))]' : 'bg-muted'}`}
+                >
+                  <div className={`w-[18px] h-[18px] rounded-full bg-white shadow transition-transform mx-[2px] ${showHighlights ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+                </button>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">Toggle off to hide highlights from profile</p>
             </div>
           </div>
         </div>
