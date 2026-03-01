@@ -36,6 +36,7 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
   const [data, setData] = useState<ExtendedPostItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const musicIconInputRef = useRef<HTMLInputElement>(null);
   const [videoUploading, setVideoUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const sheetContentRef = useRef<HTMLDivElement>(null);
@@ -160,10 +161,10 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
                   </div>
                 )}
                 <input
+                  ref={musicIconInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  id="music-icon-input"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -179,11 +180,18 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
                   variant="outline"
                   size="sm"
                   className="gap-2 text-[13px]"
-                  onClick={() => document.getElementById("music-icon-input")?.click()}
+                  onClick={() => musicIconInputRef.current?.click()}
                 >
                   <ImagePlus size={16} />
                   Upload Music Cover
                 </Button>
+                <Input
+                  type="url"
+                  placeholder="Or paste music cover URL here..."
+                  value={data.musicIcon?.startsWith("data:") ? "" : data.musicIcon || ""}
+                  onChange={(e) => setData((prev) => prev ? { ...prev, musicIcon: e.target.value } : prev)}
+                  className="h-8 text-[13px] bg-secondary border-border"
+                />
               </>
             )}
           </div>
