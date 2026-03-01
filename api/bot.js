@@ -316,11 +316,27 @@ DarkSideX is the #1 <b>Instagram Insights Editor & Analytics Tool</b> for Conten
 📊 <b>Reel & Story Insights</b>
 ┗ Generate pro-level reel analytics
 ┗ Views, likes, shares, saves — customize all
-┗ Perfect for client proof & portfolios
+┗ Edit sources (Feed, Reels tab, Stories)
+┗ Edit countries, age groups, accounts reached
+┗ Graph on/off toggle per reel
 
 📈 <b>Retention Graph Editor</b>
 ┗ Edit retention curves to look viral
 ┗ Show clients professional growth metrics
+
+🎵 <b>Music & Caption Editor</b>
+┗ Add custom music title & cover art
+┗ Edit captions on any reel
+
+🎬 <b>Video & Thumbnail Upload</b>
+┗ Upload real videos from gallery
+┗ Custom thumbnails — Supabase cloud storage
+┗ Cross-device sync — works on every device!
+
+⭐ <b>Highlights Editor</b>
+┗ Add, edit, delete story highlights
+┗ Upload custom highlight covers
+┗ Show/hide highlights toggle
 
 🔍 <b>Profile Analyzer</b>
 ┗ Deep analytics of any profile
@@ -328,6 +344,10 @@ DarkSideX is the #1 <b>Instagram Insights Editor & Analytics Tool</b> for Conten
 
 ✏️ <b>Edit Profile Section</b>
 ┗ Premium bio & profile templates
+
+🔄 <b>Cross-Device Sync</b>
+┗ All edits saved to cloud
+┗ Login on any device — your data is there!
 
 💰 <b>Pricing:</b>
 🎟️ <b>24 Hours WL</b> — $1 USDT
@@ -370,9 +390,11 @@ The most powerful IG insights editor:
 ━━━━━━━━━━━━━━━━
 • Press any reel → full insights panel
 • Customize views, likes, shares, saves
-• Generate Tier 1 country engagement
-• Audience demographics editor
-• Peak viewing times & comparisons
+• Edit top sources (Feed, Reels tab, Stories)
+• Edit countries & percentages
+• Edit age groups & demographics
+• Edit accounts reached & follows
+• Graph on/off toggle per reel
 • Great for portfolio & case studies
 
 📈 <b>RETENTION GRAPH EDITOR</b>
@@ -381,6 +403,27 @@ The most powerful IG insights editor:
 • Custom drop-off points
 • Show clients your content performs
 • Export-ready professional graphs
+
+🎵 <b>MUSIC & CAPTION EDITOR</b>
+━━━━━━━━━━━━━━━━
+• Add custom music title on any reel
+• Upload music cover art
+• Edit captions directly
+• Shows on reel detail page like real IG
+
+🎬 <b>VIDEO & THUMBNAIL UPLOAD</b>
+━━━━━━━━━━━━━━━━
+• Upload real videos from your gallery
+• Custom thumbnail upload
+• Stored in cloud — works on every device!
+• Supports Streamable, ScreenPal & direct
+
+⭐ <b>HIGHLIGHTS EDITOR</b>
+━━━━━━━━━━━━━━━━
+• Add, edit, delete story highlights
+• Upload custom highlight covers
+• Rename highlights
+• Show/hide highlights toggle in Edit Profile
 
 🔍 <b>PROFILE ANALYZER</b>
 ━━━━━━━━━━━━━━━━
@@ -395,6 +438,12 @@ The most powerful IG insights editor:
 • Edit your profile appearance
 • Premium bio templates
 • Professional layout options
+
+🔄 <b>CROSS-DEVICE SYNC</b>
+━━━━━━━━━━━━━━━━
+• All data saved to Supabase cloud
+• Videos, thumbnails, insights — everything synced
+• Login on any device, your edits are there!
 
 🔒 <b>SECURITY</b>
 ━━━━━━━━━━━━━━━━
