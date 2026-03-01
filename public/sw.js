@@ -1,5 +1,5 @@
 // IMPORTANT: Change version number on every deploy to bust cache
-const CACHE_NAME = 'ig-cache-v4-jsonblob';
+const CACHE_NAME = 'ig-cache-v5-jsonblob';
 const PRECACHE_URLS = [
   '/icon-192.png',
   '/icon-512.png',
