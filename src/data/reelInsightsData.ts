@@ -165,7 +165,22 @@ export const loadReelsData = (): ExtendedPostItem[] => {
 
 export const saveReelsData = (reels: ExtendedPostItem[]) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reels));
+    // Strip base64/blob data before saving to localStorage to avoid exceeding ~5MB limit
+    // These are already uploaded to Supabase Storage with permanent URLs
+    const cleaned = reels.map(r => {
+      const copy = { ...r };
+      if (copy.thumbnail?.startsWith('data:') || copy.thumbnail?.startsWith('blob:')) {
+        copy.thumbnail = '';
+      }
+      if (copy.musicIcon?.startsWith('data:') || copy.musicIcon?.startsWith('blob:')) {
+        copy.musicIcon = '';
+      }
+      if (copy.videoUrl?.startsWith('blob:')) {
+        copy.videoUrl = '';
+      }
+      return copy;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
     console.log("[SaveReels] Saved", reels.length, "reels. graphStartDate[0]:", reels[0]?.graphStartDate, "graphStartDate[1]:", reels[1]?.graphStartDate, "views[1]:", reels[1]?.insights?.views);
   } catch (e) {
     console.error("[SaveReels] Failed to save:", e);

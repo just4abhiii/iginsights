@@ -11,6 +11,7 @@ import ReelEditModal from "@/components/ReelEditModal";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import VideoThumbnail from "@/components/VideoThumbnail";
+import { supabase } from "@/integrations/supabase/client";
 
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState("posts");
@@ -85,6 +86,41 @@ const ProfileScreen = () => {
   const highlights = account.highlights;
 
   const isJust4abhii = activeUsername === "just4abhii" || account.profile === currentUser;
+
+  // Load media (thumbnails, videos) from Supabase for cross-device sync
+  useEffect(() => {
+    if (!isJust4abhii) return;
+    (async () => {
+      try {
+        const { data: rows } = await (supabase as any)
+          .from('reels_data')
+          .select('post_index, data')
+          .eq('account', 'just4abhii');
+        if (!rows || rows.length === 0) return;
+        setReelsData(prev => {
+          const updated = [...prev];
+          for (const row of rows) {
+            const idx = row.post_index;
+            const d = row.data as Record<string, unknown>;
+            if (idx >= 0 && idx < updated.length) {
+              const reel = { ...updated[idx] };
+              if (d.thumbnail && typeof d.thumbnail === 'string') reel.thumbnail = d.thumbnail;
+              if (d.videoUrl && typeof d.videoUrl === 'string') reel.videoUrl = d.videoUrl;
+              if (d.caption && typeof d.caption === 'string') reel.caption = d.caption;
+              if (d.musicTitle && typeof d.musicTitle === 'string') reel.musicTitle = d.musicTitle;
+              if (d.musicIcon && typeof d.musicIcon === 'string') reel.musicIcon = d.musicIcon;
+              if (d.views != null) reel.insights = { ...reel.insights, views: d.views as number };
+              if (d.likes != null) reel.insights = { ...reel.insights, likes: d.likes as number };
+              updated[idx] = reel;
+            }
+          }
+          return updated;
+        });
+      } catch (err) {
+        console.warn('[Profile] Failed to load media from Supabase:', err);
+      }
+    })();
+  }, [isJust4abhii]);
 
   const getThumb = (post: { thumbnail: string; videoUrl?: string }) => {
     // Always prioritize user-set thumbnail
