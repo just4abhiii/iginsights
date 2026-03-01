@@ -287,10 +287,10 @@ const ReelDetailScreen = () => {
       {/* Bottom content overlay */}
       <div className="absolute bottom-0 left-0 right-0 z-10 px-3">
         {/* Avatar + Username + Music stacked tight like IG */}
-        <div className="flex items-start gap-2 mb-1">
+        <div className="flex items-start gap-1.5 mb-1">
           <img src={account.profile.avatar} alt="" className="h-[28px] w-[28px] rounded-full object-cover border border-white/30 flex-shrink-0 mt-0.5" />
           <div className="flex flex-col">
-            <span className="text-[13px] font-bold text-white leading-tight">{account.profile.username}</span>
+            <span className="text-[13px] font-semibold text-white leading-tight">{account.profile.username}</span>
             {reelData?.musicTitle && (
               <div className="flex items-center gap-1 mt-[2px]">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
@@ -298,38 +298,20 @@ const ReelDetailScreen = () => {
                   <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5" fill="white" />
                   <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5" fill="white" />
                 </svg>
-                <span className="text-[12px] text-white/70 truncate">{reelData.musicTitle}</span>
+                <span className="text-[11px] text-white/70 truncate">{reelData.musicTitle}</span>
               </div>
             )}
           </div>
         </div>
-        {/* Line 3: Caption + spinning album disc on right */}
-        <div className="flex items-end gap-2 mb-1.5 mt-1">
-          <div className="flex-1 min-w-0">
-            {caption && caption.length > 50 && !showFullCaption ? (
-              <p className="text-[13px] text-white/90 leading-[17px] break-words">
-                {caption.slice(0, 50)}...{" "}
-                <button onClick={() => setShowFullCaption(true)} className="text-white/50">more</button>
-              </p>
-            ) : (
-              <p className="text-[13px] text-white/90 leading-[17px] break-words">{caption}</p>
-            )}
-          </div>
-          {/* Spinning album art disc — bottom-right like IG */}
-          {reelData?.musicTitle && (
-            <div className="w-[28px] h-[28px] rounded-[6px] border-[1.5px] border-white/30 overflow-hidden flex-shrink-0">
-              {reelData.musicIcon ? (
-                <img src={reelData.musicIcon} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                    <path d="M9 17V4l10-2v13" />
-                    <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5" />
-                    <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5" />
-                  </svg>
-                </div>
-              )}
-            </div>
+        {/* Line 3: Caption */}
+        <div className="mb-1.5 mt-1">
+          {caption && caption.length > 50 && !showFullCaption ? (
+            <p className="text-[13px] text-white/90 leading-[17px] break-words">
+              {caption.slice(0, 50)}...{" "}
+              <button onClick={() => setShowFullCaption(true)} className="text-white/50">more</button>
+            </p>
+          ) : (
+            <p className="text-[13px] text-white/90 leading-[17px] break-words">{caption}</p>
           )}
         </div>
 
