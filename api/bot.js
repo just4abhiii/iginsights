@@ -5,7 +5,7 @@ const BOT_TOKEN = "8679302654:AAElCbMtg1Op9U1m7jfPH0_4G0Ri1cJpaRw";
 const ADMIN_CHAT_ID = "8236323612";
 const ADMIN_USERNAME = "@just4abhii";
 const USDT_ADDRESS = "0xA07b34C582F31e70110C59faD70C0395a5BD339f".toLowerCase();
-const PUBLIC_URL = "https://darksidemainik.vercel.app";
+const PUBLIC_URL = "https://darksidex-just4abhiiis-projects.vercel.app";
 const KEYS_BLOB = "https://jsonblob.com/api/jsonBlob/019ca772-e65e-732a-8683-537c652da516";
 const ORDERS_BLOB = "https://jsonblob.com/api/jsonBlob/019ca0b6-4753-75e9-99c3-ebf1a5a7e993";
 
