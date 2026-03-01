@@ -151,6 +151,7 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
       syncData.sources = fixedData.insights.sources;
       syncData.countries = fixedData.insights.countries;
       syncData.ageGroups = fixedData.insights.ageGroups;
+      syncData.showGraph = fixedData.showGraph !== false;
 
       // Read existing Supabase data and merge
       const { data: existing } = await (supabase as any)
@@ -504,22 +505,40 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
           <SectionTitle>View Rate Past 3 Sec</SectionTitle>
           <Field label="Rate %" value={ins.viewRatePast3Sec} onChange={(v) => setIns("viewRatePast3Sec", Number(v))} />
 
-          {/* Sources */}
+          {/* Sources - name + percentage */}
           <SectionTitle>Sources</SectionTitle>
           {ins.sources.map((src, idx) => (
-            <Field
-              key={src.name}
-              label={src.name}
-              value={src.pct}
-              onChange={(v) => {
-                setData((prev) => {
-                  if (!prev) return prev;
-                  const newSources = [...prev.insights.sources];
-                  newSources[idx] = { ...newSources[idx], pct: Number(v) };
-                  return { ...prev, insights: { ...prev.insights, sources: newSources } };
-                });
-              }}
-            />
+            <div key={idx} className="flex items-center gap-2 py-1">
+              <Input
+                value={src.name}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setData((prev) => {
+                    if (!prev) return prev;
+                    const newSources = [...prev.insights.sources];
+                    newSources[idx] = { ...newSources[idx], name: val };
+                    return { ...prev, insights: { ...prev.insights, sources: newSources } };
+                  });
+                }}
+                className="flex-1 h-8 text-[13px] bg-secondary border-border"
+                placeholder="Source name"
+              />
+              <Input
+                type="number"
+                value={src.pct}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setData((prev) => {
+                    if (!prev) return prev;
+                    const newSources = [...prev.insights.sources];
+                    newSources[idx] = { ...newSources[idx], pct: val };
+                    return { ...prev, insights: { ...prev.insights, sources: newSources } };
+                  });
+                }}
+                className="w-[80px] h-8 text-[13px] bg-secondary border-border text-right"
+              />
+              <span className="text-[12px] text-muted-foreground">%</span>
+            </div>
           ))}
 
           {/* Accounts Reached */}
@@ -573,22 +592,40 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
             </div>
           ))}
 
-          {/* Age Groups */}
+          {/* Age Groups - name + percentage */}
           <SectionTitle>Age Groups</SectionTitle>
           {ins.ageGroups.map((a, idx) => (
-            <Field
-              key={a.range}
-              label={a.range}
-              value={a.pct}
-              onChange={(v) => {
-                setData((prev) => {
-                  if (!prev) return prev;
-                  const newA = [...prev.insights.ageGroups];
-                  newA[idx] = { ...newA[idx], pct: Number(v) };
-                  return { ...prev, insights: { ...prev.insights, ageGroups: newA } };
-                });
-              }}
-            />
+            <div key={idx} className="flex items-center gap-2 py-1">
+              <Input
+                value={a.range}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setData((prev) => {
+                    if (!prev) return prev;
+                    const newA = [...prev.insights.ageGroups];
+                    newA[idx] = { ...newA[idx], range: val };
+                    return { ...prev, insights: { ...prev.insights, ageGroups: newA } };
+                  });
+                }}
+                className="flex-1 h-8 text-[13px] bg-secondary border-border"
+                placeholder="Age range"
+              />
+              <Input
+                type="number"
+                value={a.pct}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setData((prev) => {
+                    if (!prev) return prev;
+                    const newA = [...prev.insights.ageGroups];
+                    newA[idx] = { ...newA[idx], pct: val };
+                    return { ...prev, insights: { ...prev.insights, ageGroups: newA } };
+                  });
+                }}
+                className="w-[80px] h-8 text-[13px] bg-secondary border-border text-right"
+              />
+              <span className="text-[12px] text-muted-foreground">%</span>
+            </div>
           ))}
 
           {/* Profile Activity */}
@@ -606,6 +643,19 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
               className="h-8 text-[13px] bg-secondary border-border"
             />
           </div>
+
+          {/* Show/Hide Graph Toggle */}
+          <SectionTitle>Graph Visibility</SectionTitle>
+          <div className="flex items-center justify-between py-2">
+            <span className="text-[13px] text-foreground">Show Graph</span>
+            <button
+              onClick={() => setData((prev) => prev ? { ...prev, showGraph: !(prev.showGraph !== false) } : prev)}
+              className={`w-[44px] h-[24px] rounded-full transition-colors ${data.showGraph !== false ? 'bg-[#0095f6]' : 'bg-muted'}`}
+            >
+              <div className={`w-[20px] h-[20px] rounded-full bg-white shadow transition-transform mx-[2px] ${data.showGraph !== false ? 'translate-x-[20px]' : 'translate-x-0'}`} />
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground -mt-1 mb-2">Toggle off to hide the "Views over time" graph in insights</p>
 
           {/* Views Over Time (5 Points) */}
           <SectionTitle>Views Over Time (5 Points)</SectionTitle>
