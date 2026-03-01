@@ -31,19 +31,19 @@ const DirectVideoPlayer = ({ src }: { src: string }) => {
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !src) return;
-    
+
     setShowPlayBtn(false);
     video.pause();
     video.src = src;
     video.load();
-    
+
     const onCanPlay = async () => {
       console.log("[VideoPlayer] canplay fired, attempting play for:", src);
       try {
         video.muted = true;
         await video.play();
         console.log("[VideoPlayer] playing successfully");
-        try { video.muted = false; } catch {}
+        try { video.muted = false; } catch { }
       } catch (err) {
         console.warn("[VideoPlayer] autoplay failed:", err);
         setShowPlayBtn(true);
@@ -78,7 +78,7 @@ const DirectVideoPlayer = ({ src }: { src: string }) => {
     v.muted = false;
     v.play().then(() => setShowPlayBtn(false)).catch(() => {
       v.muted = true;
-      v.play().then(() => setShowPlayBtn(false)).catch(() => {});
+      v.play().then(() => setShowPlayBtn(false)).catch(() => { });
     });
   };
 
@@ -93,17 +93,17 @@ const DirectVideoPlayer = ({ src }: { src: string }) => {
         preload="auto"
         onClick={(e) => {
           const v = e.currentTarget;
-          if (v.paused) { 
-            v.muted = false; 
-            v.play().catch(() => { v.muted = true; v.play().catch(() => {}); }); 
+          if (v.paused) {
+            v.muted = false;
+            v.play().catch(() => { v.muted = true; v.play().catch(() => { }); });
             setShowPlayBtn(false);
-          } else if (v.muted) { 
-            v.muted = false; 
+          } else if (v.muted) {
+            v.muted = false;
           }
         }}
       />
       {showPlayBtn && (
-        <button 
+        <button
           onClick={handleManualPlay}
           className="absolute inset-0 flex items-center justify-center bg-black/30 z-10"
         >
@@ -235,49 +235,49 @@ const ReelDetailScreen = () => {
       </div>
 
       {/* Right side actions */}
-      <div className="absolute right-3 bottom-[120px] flex flex-col items-center gap-5 z-10">
+      <div className="absolute right-3 bottom-[120px] flex flex-col items-center gap-4 z-10">
         {/* Heart */}
         <button onClick={() => setLiked(!liked)} className="flex flex-col items-center gap-0.5">
-          <Heart size={28} className={cn(liked ? "fill-[#FF3040] text-[#FF3040]" : "text-white")} />
-          <span className="text-[11px] text-white font-semibold">{stats.likes}</span>
+          <Heart size={24} className={cn(liked ? "fill-[#FF3040] text-[#FF3040]" : "text-white")} />
+          <span className="text-[11px] text-white font-medium">{stats.likes}</span>
         </button>
         {/* Comment */}
         <button className="flex flex-col items-center gap-0.5">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)" }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)" }}>
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>
-          <span className="text-[11px] text-white font-semibold">{stats.comments}</span>
+          <span className="text-[11px] text-white font-medium">{stats.comments}</span>
         </button>
         {/* Repost */}
         <button className="flex flex-col items-center gap-0.5">
-           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-             <polyline points="17 1 21 5 17 9" />
-             <path d="M3 12V9a4 4 0 0 1 4-4h14" />
-             <polyline points="7 23 3 19 7 15" />
-             <path d="M21 12v3a4 4 0 0 1-4 4H3" />
-           </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="17 1 21 5 17 9" />
+            <path d="M3 12V9a4 4 0 0 1 4-4h14" />
+            <polyline points="7 23 3 19 7 15" />
+            <path d="M21 12v3a4 4 0 0 1-4 4H3" />
+          </svg>
         </button>
         {/* Send */}
         <button className="flex flex-col items-center gap-0.5">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M22 2L11 13" />
             <path d="M22 2L15 22L11 13L2 9L22 2Z" />
           </svg>
-          <span className="text-[11px] text-white font-semibold">{stats.sends}</span>
+          <span className="text-[11px] text-white font-medium">{stats.sends}</span>
         </button>
         {/* Bookmark */}
         <button onClick={() => setSaved(!saved)} className="flex flex-col items-center gap-0.5">
-          <Bookmark size={26} className={cn("text-white", saved && "fill-white")} />
-          <span className="text-[11px] text-white font-semibold">{stats.saves}</span>
+          <Bookmark size={24} className={cn("text-white", saved && "fill-white")} />
+          <span className="text-[11px] text-white font-medium">{stats.saves}</span>
         </button>
         {/* 3 dots */}
         <button className="text-white">
-          <MoreVertical size={20} />
+          <MoreVertical size={18} />
         </button>
-        {/* User profile pic / music icon */}
-        <div className="w-[26px] h-[26px] rounded-[6px] border-[1.5px] border-white/40 overflow-hidden mt-0.5">
+        {/* Music disc / profile pic — small spinning disc like IG */}
+        <div className="w-[22px] h-[22px] rounded-[5px] border-[1.5px] border-white/40 overflow-hidden mt-0.5">
           {reelData?.musicTitle && reelData?.musicIcon ? (
-            <img src={reelData.musicIcon} alt="" className="w-full h-full object-cover" />
+            <img src={reelData.musicIcon} alt="" className="w-full h-full object-cover animate-[spin_4s_linear_infinite]" />
           ) : (
             <img src={account.profile.avatar} alt="" className="w-full h-full object-cover" />
           )}
@@ -287,24 +287,24 @@ const ReelDetailScreen = () => {
       {/* Bottom content overlay */}
       <div className="absolute bottom-0 left-0 right-0 z-10 px-3">
         {/* Username + avatar + music */}
-        <div className="flex items-center gap-2 mb-1">
-          <img src={account.profile.avatar} alt="" className="h-[32px] w-[32px] rounded-full object-cover border border-white/30" />
-          <div className="flex flex-col">
+        <div className="flex items-center gap-2 mb-1.5">
+          <img src={account.profile.avatar} alt="" className="h-[28px] w-[28px] rounded-full object-cover border border-white/30" />
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[13px] font-bold text-white leading-tight">{account.profile.username}</span>
             {reelData?.musicTitle && (
-              <div className="flex items-center gap-1 mt-0.5">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 17V4l10-2v13" stroke="white" strokeWidth="2.5" fill="none"/>
-                  <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5" fill="white"/>
-                  <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5" fill="white"/>
+              <div className="flex items-center gap-1">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 17V4l10-2v13" stroke="white" strokeWidth="2.5" fill="none" />
+                  <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5" fill="white" />
+                  <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5" fill="white" />
                 </svg>
-                <span className="text-[11px] text-white/70 leading-tight">{reelData.musicTitle}</span>
+                <span className="text-[11px] text-white/60 leading-tight">{reelData.musicTitle}</span>
               </div>
             )}
           </div>
         </div>
-        {/* Caption + music icon */}
-        <div className="flex items-end gap-3 mb-1.5 mt-2">
+        {/* Caption + music cover */}
+        <div className="flex items-end gap-2 mb-1.5">
           <div className="flex-1 min-w-0">
             {caption && caption.length > 80 && !showFullCaption ? (
               <p className="text-[13px] text-white/90 leading-[17px] break-words">
@@ -315,17 +315,17 @@ const ReelDetailScreen = () => {
               <p className="text-[13px] text-white/90 leading-[17px] break-words">{caption}</p>
             )}
           </div>
-          {/* Music cover art thumbnail — bottom-right aligned */}
+          {/* Music cover art thumbnail — small like IG */}
           {reelData?.musicTitle && (
-            <div className="w-[32px] h-[32px] rounded-[7px] border-[1.5px] border-white/30 overflow-hidden flex-shrink-0">
+            <div className="w-[26px] h-[26px] rounded-[6px] border-[1.5px] border-white/30 overflow-hidden flex-shrink-0 animate-[spin_4s_linear_infinite]">
               {reelData.musicIcon ? (
                 <img src={reelData.musicIcon} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                    <path d="M9 17V4l10-2v13"/>
-                    <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5"/>
-                    <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5"/>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
+                    <path d="M9 17V4l10-2v13" />
+                    <ellipse cx="5.5" cy="17.5" rx="3.5" ry="2.5" />
+                    <ellipse cx="15.5" cy="15.5" rx="3.5" ry="2.5" />
                   </svg>
                 </div>
               )}
@@ -340,12 +340,12 @@ const ReelDetailScreen = () => {
             <svg width="13" height="11" viewBox="0 0 120 100">
               <defs>
                 <mask id="eye-mask-detail">
-                  <rect width="120" height="100" fill="white"/>
-                  <circle cx="74" cy="48" r="14" fill="black"/>
+                  <rect width="120" height="100" fill="white" />
+                  <circle cx="74" cy="48" r="14" fill="black" />
                 </mask>
               </defs>
-              <path d="M15 45 C30 8, 90 8, 105 45" stroke="white" strokeWidth="10" strokeLinecap="round" fill="none"/>
-              <circle cx="60" cy="62" r="30" fill="white" mask="url(#eye-mask-detail)"/>
+              <path d="M15 45 C30 8, 90 8, 105 45" stroke="white" strokeWidth="10" strokeLinecap="round" fill="none" />
+              <circle cx="60" cy="62" r="30" fill="white" mask="url(#eye-mask-detail)" />
             </svg>
             <span className="text-[12px] text-white/90 font-normal">{stats.views} · View Insights</span>
           </button>

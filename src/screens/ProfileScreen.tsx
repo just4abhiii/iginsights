@@ -152,12 +152,16 @@ const ProfileScreen = () => {
   }, [endPress, navigate, profile.username]);
 
   const handleReelSave = useCallback((index: number, updated: ExtendedPostItem) => {
+    console.log("[ProfileSave] Receiving reel", index, "musicTitle:", updated.musicTitle, "musicIcon:", updated.musicIcon?.slice(0, 50), "caption:", updated.caption?.slice(0, 30));
     // Read fresh from localStorage to avoid stale closure
     const freshData = loadReelsData();
     const newData = [...freshData];
     newData[index] = updated;
     setReelsData(newData);
     saveReelsData(newData);
+    // Verify save
+    const verify = loadReelsData();
+    console.log("[ProfileSave] Verified reel", index, "musicTitle:", verify[index]?.musicTitle, "musicIcon:", verify[index]?.musicIcon?.slice(0, 50));
     toast.success(`Reel #${index + 1} updated!`);
   }, []);
 

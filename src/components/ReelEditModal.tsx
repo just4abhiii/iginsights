@@ -101,26 +101,41 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
     setData((prev) => prev ? { ...prev, insights: { ...prev.insights, [key]: value } } : prev);
   };
 
-  const handleSave = () => {
+  const handleSave = (e?: React.MouseEvent) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     const fixedData = { ...data };
     fixedData.insights = { ...fixedData.insights, genderFemale: 100 - fixedData.insights.genderMale };
+    // Explicitly preserve music fields
+    fixedData.musicTitle = data.musicTitle || "";
+    fixedData.musicIcon = data.musicIcon || "";
+    fixedData.caption = data.caption || "";
     // Auto-generate thumbnail from streamable video URL only if no custom thumbnail set
     if (fixedData.videoUrl?.includes("streamable.com") && !fixedData.thumbnail) {
       const videoId = fixedData.videoUrl.split("/").pop();
       fixedData.thumbnail = `https://cdn-cf-east.streamable.com/image/${videoId}.jpg`;
     }
-    console.log("[ReelEdit] Saving reel", reelIndex, "views:", fixedData.insights.views, "caption:", fixedData.caption?.slice(0, 30));
+    console.log("[ReelEdit] Saving reel", reelIndex, "musicTitle:", fixedData.musicTitle, "musicIcon:", fixedData.musicIcon?.slice(0, 50), "caption:", fixedData.caption?.slice(0, 30));
     onSave(reelIndex, fixedData);
+    // Verify save worked
+    try {
+      const saved = JSON.parse(localStorage.getItem('just4abhii_reels_data_v2') || '[]');
+      const r = saved[reelIndex];
+      console.log("[ReelEdit] VERIFIED musicTitle in localStorage:", r?.musicTitle, "musicIcon:", r?.musicIcon?.slice(0, 50));
+    } catch { }
     onClose();
   };
 
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+    <Sheet open={open} onOpenChange={(v) => { if (!v) handleSave(); }}>
       <SheetContent ref={sheetContentRef} side="bottom" className="h-[85vh] overflow-y-auto rounded-t-2xl bg-background" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <SheetHeader>
-          <SheetTitle className="text-[16px] font-bold">Edit Reel #{reelIndex + 1}</SheetTitle>
-        </SheetHeader>
+        <div className="flex items-center justify-between px-1 pb-2 border-b border-border sticky top-0 bg-background z-10">
+          <button onClick={onClose} className="text-foreground text-sm">Cancel</button>
+          <SheetHeader className="flex-1 text-center">
+            <SheetTitle className="text-[16px] font-bold">Edit Reel #{reelIndex + 1}</SheetTitle>
+          </SheetHeader>
+          <button onClick={(e) => handleSave(e)} className="text-sm font-bold text-[hsl(var(--ig-blue))]">Done</button>
+        </div>
 
         <div className="pb-8 space-y-1">
           {/* Caption */}
@@ -609,7 +624,7 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
             maxViews={ins.views}
             inline={true}
           />
-          <Button onClick={handleSave} className="w-full mt-6 bg-[#0095f6] hover:bg-[#0081d6] text-white font-semibold">
+          <Button onClick={(e) => handleSave(e)} className="w-full mt-6 bg-[#0095f6] hover:bg-[#0081d6] text-white font-semibold">
             Save Changes
           </Button>
 

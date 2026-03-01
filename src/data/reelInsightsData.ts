@@ -127,16 +127,30 @@ const defaultCaptions = [
   "Grind never stops 🏋️", "Different breed 🐺", "Crown me 👑", "Pure fire 🔥", "Game over 🎮",
 ];
 
+const defaultMusicTitles = [
+  "Sofia Camara • Ingrained (DN...",
+  "Eminem • Lose Yourself",
+  "The Weeknd • Blinding Lights",
+];
+
+const defaultMusicIcons = [
+  "https://i.pravatar.cc/80?img=10",
+  "https://i.pravatar.cc/80?img=12",
+  "https://i.pravatar.cc/80?img=14",
+];
+
 export const defaultJust4abhiiReels: ExtendedPostItem[] = Array.from({ length: 20 }, (_, i) => ({
   thumbnail: just4abhiiThumbnails[i],
   videoUrl: i === 0 ? "https://streamable.com/owo7oy" : i === 1 ? "https://go.screenpal.com/watch/cOnobNn0qGq" : undefined,
   caption: defaultCaptions[i],
   duration: "0:10",
+  musicTitle: i < 3 ? defaultMusicTitles[i] : "",
+  musicIcon: i < 3 ? defaultMusicIcons[i] : "",
   insights: defaultInsights(i),
 }));
 
 // localStorage key — bump version to force refresh with new video URLs
-const STORAGE_KEY = "just4abhii_reels_data_v2";
+const STORAGE_KEY = "just4abhii_reels_data_v3";
 
 export const loadReelsData = (): ExtendedPostItem[] => {
   try {
