@@ -5,8 +5,10 @@
  * This way keys work across ALL devices.
  */
 
-// API proxy endpoint (Vercel serverless function proxies to JSONBlob)
-const BLOB_URL = "/api/keys";
+// Read URL: goes through Vercel proxy (handles CORS, caching)
+const READ_URL = "/api/keys";
+// Write URL: goes DIRECTLY to JSONBlob (bypasses proxy issues)
+const WRITE_URL = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
 
 // Generate a unique device fingerprint based on browser properties
 export function getDeviceFingerprint(): string {
@@ -110,7 +112,7 @@ async function readBlob(): Promise<BlobData> {
     const maxRetries = 3;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const res = await fetch(BLOB_URL + `?_t=${Date.now()}`, {
+            const res = await fetch(READ_URL + `?_t=${Date.now()}`, {
                 headers: { "Accept": "application/json", "Cache-Control": "no-cache" },
             });
             if (!res.ok) {
@@ -157,7 +159,7 @@ async function writeBlob(data: BlobData): Promise<boolean> {
         writeLock = true;
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                const res = await fetch(BLOB_URL, {
+                const res = await fetch(WRITE_URL, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
