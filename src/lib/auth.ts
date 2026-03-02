@@ -1,11 +1,17 @@
 /**
  * Authentication & License Key System
- * Uses JSONBlob.com for centralized key storage (no Supabase needed).
- * Keys are stored in a single JSON blob accessible via REST API.
- * This way keys work across ALL devices.
+ * DAILY PASSWORD: Change password and expiry below, deploy, done!
+ * Also supports JSONBlob keys as backup.
  */
 
-// Direct JSONBlob URL for both reads and writes
+// ============ DAILY PASSWORD - CHANGE THIS ============
+// Password: whatever you want clients to type
+// Expires: set to tomorrow's date (YYYY-MM-DD format)
+const DAILY_PASSWORD = "darkside02";
+const DAILY_PASSWORD_EXPIRES = "2026-03-03"; // valid till this date (end of day)
+// ======================================================
+
+// Direct JSONBlob URL for key system (backup)
 const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
 
 // Generate a unique device fingerprint based on browser properties
@@ -382,61 +388,85 @@ export type LoginResult =
     | { success: false; error: string };
 
 export async function validateAndLogin(accessKey: string): Promise<LoginResult> {
-    const blob = await readBlob();
-    const normalizedKey = accessKey.toUpperCase().trim();
-    const keyData = blob.keys.find((k) => k.key === normalizedKey);
+    const normalizedKey = accessKey.trim();
 
-    if (!keyData) {
-        return { success: false, error: "Invalid access key. Please check your key and try again." };
+    // ===== DAILY PASSWORD CHECK (no external calls!) =====
+    if (normalizedKey.toLowerCase() === DAILY_PASSWORD.toLowerCase()) {
+        const expiryDate = new Date(DAILY_PASSWORD_EXPIRES + "T23:59:59");
+        if (new Date() > expiryDate) {
+            return { success: false, error: "This password has expired. Contact admin for new password." };
+        }
+        // Daily password is valid! Login directly
+        const deviceFP = getDeviceFingerprint();
+        saveAuthSession({
+            key: "DAILY-PASS",
+            deviceFingerprint: deviceFP,
+            loginAt: new Date().toISOString(),
+        });
+        return { success: true };
     }
+    // ===== END DAILY PASSWORD =====
 
-    if (!keyData.active) {
-        return { success: false, error: "This access key has been deactivated. Contact support." };
-    }
-
-    if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) {
-        return { success: false, error: "This access key has expired. Please renew your subscription." };
-    }
-
-    const deviceFP = getDeviceFingerprint();
-
-    // Check device lock
-    if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) {
-        return {
-            success: false,
-            error: "This key is already linked to another device. Each key can only be used on one device.",
-        };
-    }
-
-    // Lock to this device
-    if (!keyData.deviceFingerprint) {
-        keyData.deviceFingerprint = deviceFP;
-    }
-
-    // Get location info
+    // Fallback: Try JSONBlob key system
     try {
-        const loc = await fetchLocation();
-        keyData.loginCity = loc.city;
-        keyData.loginCountry = loc.country;
-        keyData.loginIP = loc.ip;
-    } catch {
-        // not critical
+        const blob = await readBlob();
+        const keyData = blob.keys.find((k) => k.key === normalizedKey.toUpperCase());
+
+        if (!keyData) {
+            return { success: false, error: "Invalid access key. Please check your key and try again." };
+        }
+
+        if (!keyData.active) {
+            return { success: false, error: "This access key has been deactivated. Contact support." };
+        }
+
+        if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) {
+            return { success: false, error: "This access key has expired. Please renew your subscription." };
+        }
+
+        const deviceFP = getDeviceFingerprint();
+
+        // Check device lock
+        if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) {
+            return {
+                success: false,
+                error: "This key is already linked to another device. Each key can only be used on one device.",
+            };
+        }
+
+        // Lock to this device
+        if (!keyData.deviceFingerprint) {
+            keyData.deviceFingerprint = deviceFP;
+        }
+
+        // Get location info
+        try {
+            const loc = await fetchLocation();
+            keyData.loginCity = loc.city;
+            keyData.loginCountry = loc.country;
+            keyData.loginIP = loc.ip;
+        } catch {
+            // not critical
+        }
+
+        keyData.lastUsedAt = new Date().toISOString();
+        await writeBlob(blob);
+
+        // Send Telegram notification to admin
+        sendTelegramAlert(keyData, deviceFP);
+
+        // Save session locally
+        saveAuthSession({
+            key: normalizedKey.toUpperCase(),
+            deviceFingerprint: deviceFP,
+            loginAt: new Date().toISOString(),
+        });
+
+        return { success: true };
+    } catch (err) {
+        console.error("[Auth] JSONBlob key validation failed:", err);
+        return { success: false, error: "Server error. Try the daily password instead." };
     }
-
-    keyData.lastUsedAt = new Date().toISOString();
-    await writeBlob(blob);
-
-    // Send Telegram notification to admin
-    sendTelegramAlert(keyData, deviceFP);
-
-    // Save session locally
-    saveAuthSession({
-        key: normalizedKey,
-        deviceFingerprint: deviceFP,
-        loginAt: new Date().toISOString(),
-    });
-
-    return { success: true };
 }
 
 // --- Check if currently authenticated ---
@@ -444,16 +474,27 @@ export async function isAuthenticatedAsync(): Promise<boolean> {
     const session = getAuthSession();
     if (!session) return false;
 
-    const blob = await readBlobSafe();
-    const keyData = blob.keys.find((k) => k.key === session.key);
-    if (!keyData) return false;
-    if (!keyData.active) return false;
-    if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) return false;
+    // Daily password sessions: valid until expiry date
+    if (session.key === "DAILY-PASS") {
+        const expiryDate = new Date(DAILY_PASSWORD_EXPIRES + "T23:59:59");
+        return new Date() <= expiryDate;
+    }
 
-    const deviceFP = getDeviceFingerprint();
-    if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) return false;
+    // JSONBlob key sessions
+    try {
+        const blob = await readBlobSafe();
+        const keyData = blob.keys.find((k) => k.key === session.key);
+        if (!keyData) return false;
+        if (!keyData.active) return false;
+        if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) return false;
 
-    return true;
+        const deviceFP = getDeviceFingerprint();
+        if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) return false;
+
+        return true;
+    } catch {
+        return true; // Don't kick user out if JSONBlob is down
+    }
 }
 
 // Quick local check (for initial render)
