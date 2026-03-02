@@ -10,7 +10,7 @@
  * PATCH  /api/keys              → Revoke/reactivate a key (admin only)
  */
 
-const { Redis } = require("@upstash/redis");
+import { Redis } from "@upstash/redis";
 
 const redis = new Redis({
     url: process.env.KV_REST_API_URL,
@@ -50,7 +50,7 @@ function generateKey() {
     return segs.join("-");
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
     // Handle CORS preflight
     if (req.method === "OPTIONS") {
         Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
