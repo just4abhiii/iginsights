@@ -1,5 +1,5 @@
 // IMPORTANT: Change version number on every deploy to bust cache
-const CACHE_NAME = 'ig-cache-v5-jsonblob';
+const CACHE_NAME = 'ig-cache-v6-fixed';
 const PRECACHE_URLS = [
   '/icon-192.png',
   '/icon-512.png',
@@ -33,7 +33,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for API/supabase calls
+  // NEVER intercept API calls — always go direct to server
+  if (url.pathname.startsWith('/api/')) {
+    return; // Let the browser handle it natively — no service worker interference
+  }
+
+  // Network-first for non-same-origin or non-GET
   if (url.hostname !== self.location.hostname || event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
     return;
