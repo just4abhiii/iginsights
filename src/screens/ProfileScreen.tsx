@@ -1,4 +1,4 @@
-import { Grid3X3, ChevronDown, Plus, Menu, Play, Eye, TrendingUp, Contact, Search, X, BadgeCheck, ChevronRight, ArrowUpRight } from "lucide-react";
+import { Grid3X3, ChevronDown, Plus, Menu, Play, Eye, TrendingUp, Contact, Search, X, BadgeCheck, ChevronRight, ArrowUpRight, LogOut, Settings, HelpCircle, Bookmark, Clock, Star } from "lucide-react";
 import threadsLogo from "@/assets/threads-logo.png";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import VideoThumbnail from "@/components/VideoThumbnail";
 import { supabase } from "@/integrations/supabase/client";
+import { clearAuthSession } from "@/lib/auth";
 
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState("posts");
@@ -77,6 +78,9 @@ const ProfileScreen = () => {
   const dashboardLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dashboardLongPressTriggered = useRef(false);
   const [dashboardVersion, setDashboardVersion] = useState(0);
+
+  // Settings menu state
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const account: MockAccount = useMemo(() => {
     return mockAccounts[activeUsername] || mockAccounts["b4by_4ngel_"];
@@ -642,7 +646,7 @@ const ProfileScreen = () => {
             <button className="text-foreground">
               <img src={threadsLogo} alt="Threads" className="w-[26px] h-[26px] dark:invert" />
             </button>
-            <button className="text-foreground">
+            <button className="text-foreground" onClick={() => setSettingsOpen(true)}>
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="12" x2="21" y2="12" />
@@ -978,6 +982,78 @@ const ProfileScreen = () => {
             avatar={profile.avatar}
             onClose={() => setHighlightViewerOpen(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Settings Drawer */}
+      <AnimatePresence>
+        {settingsOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[100] bg-black/50"
+              onClick={() => setSettingsOpen(false)}
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 z-[101] w-[280px] bg-background border-l border-border shadow-2xl overflow-y-auto"
+            >
+              <div className="px-4 py-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-[18px] font-bold text-foreground">Settings</h2>
+                  <button onClick={() => setSettingsOpen(false)} className="p-1 rounded-full hover:bg-secondary">
+                    <X size={22} className="text-foreground" />
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-secondary transition-colors text-left">
+                    <Settings size={22} className="text-foreground" />
+                    <span className="text-[15px] text-foreground">Settings and privacy</span>
+                  </button>
+                  <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-secondary transition-colors text-left">
+                    <Clock size={22} className="text-foreground" />
+                    <span className="text-[15px] text-foreground">Your activity</span>
+                  </button>
+                  <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-secondary transition-colors text-left">
+                    <Bookmark size={22} className="text-foreground" />
+                    <span className="text-[15px] text-foreground">Saved</span>
+                  </button>
+                  <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-secondary transition-colors text-left">
+                    <Star size={22} className="text-foreground" />
+                    <span className="text-[15px] text-foreground">Favorites</span>
+                  </button>
+                  <button className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-secondary transition-colors text-left">
+                    <HelpCircle size={22} className="text-foreground" />
+                    <span className="text-[15px] text-foreground">Help</span>
+                  </button>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-border">
+                  <button
+                    onClick={() => {
+                      const confirmed = window.confirm("Are you sure you want to log out?");
+                      if (!confirmed) return;
+                      clearAuthSession();
+                      window.location.reload();
+                    }}
+                    className="flex items-center gap-3 w-full px-3 py-3 rounded-xl hover:bg-red-500/10 transition-colors text-left"
+                  >
+                    <LogOut size={22} className="text-red-500" />
+                    <span className="text-[15px] text-red-500 font-semibold">Log out</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>

@@ -88,14 +88,19 @@ const AdminPanel = () => {
     const handleCreateKey = async () => {
         if (!newLabel.trim()) return;
         setActionLoading("create");
-        const k = await createKey(newLabel.trim(), noExpiry ? undefined : parseInt(newExpiry) || 30);
-        setNewLabel("");
-        setNewExpiry("30");
-        setNoExpiry(false);
-        setShowCreate(false);
+        try {
+            const k = await createKey(newLabel.trim(), noExpiry ? undefined : parseInt(newExpiry) || 30);
+            setNewLabel("");
+            setNewExpiry("30");
+            setNoExpiry(false);
+            setShowCreate(false);
+            await refreshKeys();
+            copyToClipboard(k.key);
+        } catch (err) {
+            alert("❌ Failed to create key. Network error — please try again.");
+            console.error("[Admin] createKey failed:", err);
+        }
         setActionLoading("");
-        await refreshKeys();
-        copyToClipboard(k.key);
     };
 
     const copyToClipboard = (text: string) => {
@@ -106,9 +111,14 @@ const AdminPanel = () => {
 
     const handleChangePassword = async () => {
         if (newPass.length < 4) return;
-        await setAdminPassword(newPass);
-        setNewPass("");
-        setShowChangePass(false);
+        try {
+            await setAdminPassword(newPass);
+            setNewPass("");
+            setShowChangePass(false);
+        } catch (err) {
+            alert("❌ Failed to change password. Network error — please try again.");
+            console.error("[Admin] setAdminPassword failed:", err);
+        }
     };
 
     const handleAction = async (action: string, key: string, fn: () => Promise<unknown>) => {
@@ -122,8 +132,13 @@ const AdminPanel = () => {
             if (!confirmed) return;
         }
         setActionLoading(`${action}-${key}`);
-        await fn();
-        await refreshKeys();
+        try {
+            await fn();
+            await refreshKeys();
+        } catch (err) {
+            alert(`❌ Failed to ${action} key. Network error — please try again.`);
+            console.error(`[Admin] ${action} failed:`, err);
+        }
         setActionLoading("");
     };
 
@@ -284,10 +299,15 @@ const AdminPanel = () => {
                             onClick={async () => {
                                 if (!ytInput.trim()) return;
                                 setActionLoading("yt");
-                                await setYoutubeUrl(ytInput.trim());
-                                setYtSaved(true);
+                                try {
+                                    await setYoutubeUrl(ytInput.trim());
+                                    setYtSaved(true);
+                                    setTimeout(() => setYtSaved(false), 3000);
+                                } catch (err) {
+                                    alert("❌ Failed to update YouTube URL. Network error — please try again.");
+                                    console.error("[Admin] setYoutubeUrl failed:", err);
+                                }
                                 setActionLoading("");
-                                setTimeout(() => setYtSaved(false), 3000);
                             }}
                             disabled={actionLoading === "yt"}
                             className="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 text-[12px] font-semibold hover:bg-red-500/30 transition-colors disabled:opacity-50"

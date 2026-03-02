@@ -2,7 +2,7 @@
 // Handles CORS and acts as a bridge between browser and JSONBlob
 // If the blob is missing/deleted, auto-recovers with default data
 
-const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019ca772-e65e-732a-8683-537c652da516";
+const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
 
 const DEFAULT_DATA = {
     keys: [],
@@ -44,6 +44,44 @@ export default async function handler(req, res) {
             const body = req.body || {};
             if (!body.keys) body.keys = [];
             if (!body.adminPass) body.adminPass = DEFAULT_DATA.adminPass;
+
+            // ===== SAFETY GUARD: Prevent accidental data loss =====
+            // Before writing, check if we're about to lose keys
+            // (e.g., due to race condition or stale data overwrite)
+            try {
+                const currentRes = await fetch(BLOB_URL, {
+                    headers: { Accept: "application/json", "Cache-Control": "no-cache" },
+                });
+                if (currentRes.ok) {
+                    const currentData = await currentRes.json();
+                    const currentKeyCount = (currentData.keys || []).length;
+                    const newKeyCount = body.keys.length;
+
+                    // Block write if it would delete MORE than 1 key at once
+                    // (legitimate operations only add keys or remove 1 at a time)
+                    if (currentKeyCount > 0 && newKeyCount < currentKeyCount - 1) {
+                        console.error(`[keys] BLOCKED dangerous write: would reduce keys from ${currentKeyCount} to ${newKeyCount}`);
+                        return res.status(409).json({
+                            error: "Write blocked: would delete multiple keys at once. This is likely a race condition.",
+                            currentKeys: currentKeyCount,
+                            attemptedKeys: newKeyCount,
+                        });
+                    }
+
+                    // Also block writing 0 keys if there were existing keys
+                    if (currentKeyCount > 0 && newKeyCount === 0) {
+                        console.error(`[keys] BLOCKED dangerous write: would wipe all ${currentKeyCount} keys`);
+                        return res.status(409).json({
+                            error: "Write blocked: cannot wipe all keys.",
+                            currentKeys: currentKeyCount,
+                        });
+                    }
+                }
+            } catch (guardErr) {
+                // If guard check fails, still allow write (don't block everything)
+                console.warn("[keys] Safety guard check failed, proceeding with write:", guardErr.message);
+            }
+            // ===== END SAFETY GUARD =====
 
             const bodyStr = JSON.stringify(body);
             const response = await fetch(BLOB_URL, {

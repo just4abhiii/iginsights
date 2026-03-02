@@ -119,7 +119,7 @@ async function readBlob(): Promise<BlobData> {
                     await new Promise(r => setTimeout(r, 500 * attempt));
                     continue;
                 }
-                return { keys: [], adminPass: HARDCODED_ADMIN_PASS };
+                throw new Error(`[Auth] Read blob failed after ${maxRetries} retries (HTTP ${res.status})`);
             }
             const data = await res.json();
             // Safety: ensure keys array always exists
@@ -132,10 +132,19 @@ async function readBlob(): Promise<BlobData> {
                 await new Promise(r => setTimeout(r, 500 * attempt));
                 continue;
             }
-            return { keys: [], adminPass: HARDCODED_ADMIN_PASS };
+            throw err;
         }
     }
-    return { keys: [], adminPass: HARDCODED_ADMIN_PASS };
+    throw new Error("[Auth] Read blob failed unexpectedly");
+}
+
+// Safe version for read-only operations — returns defaults on failure instead of throwing
+async function readBlobSafe(): Promise<BlobData> {
+    try {
+        return await readBlob();
+    } catch {
+        return { keys: [], adminPass: HARDCODED_ADMIN_PASS };
+    }
 }
 
 async function writeBlob(data: BlobData): Promise<boolean> {
@@ -156,6 +165,11 @@ async function writeBlob(data: BlobData): Promise<boolean> {
                     },
                     body: JSON.stringify(data),
                 });
+                // Safety guard blocked the write (race condition detected)
+                if (res.status === 409) {
+                    console.error("[Auth] Write BLOCKED by safety guard — race condition detected. Aborting.");
+                    return false;
+                }
                 if (!res.ok) {
                     console.error(`[Auth] Write blob HTTP ${res.status} (attempt ${attempt}/${maxRetries})`);
                     if (attempt < maxRetries) {
@@ -191,7 +205,7 @@ export function getAdminPassword(): string {
 }
 
 export async function getAdminPasswordAsync(): Promise<string> {
-    const blob = await readBlob();
+    const blob = await readBlobSafe();
     return blob.adminPass || HARDCODED_ADMIN_PASS;
 }
 
@@ -205,7 +219,7 @@ export async function setAdminPassword(pass: string) {
 const DEFAULT_YT_URL = "https://www.youtube.com/embed/pYfpNRmoRC0?rel=0&modestbranding=1&showinfo=0";
 
 export async function getYoutubeUrl(): Promise<string> {
-    const blob = await readBlob();
+    const blob = await readBlobSafe();
     return blob.youtubeUrl || DEFAULT_YT_URL;
 }
 
@@ -228,7 +242,7 @@ export async function setYoutubeUrl(url: string) {
 }
 
 export async function verifyAdminAsync(pass: string): Promise<boolean> {
-    const blob = await readBlob();
+    const blob = await readBlobSafe();
     return pass === (blob.adminPass || HARDCODED_ADMIN_PASS);
 }
 
@@ -239,7 +253,7 @@ export function verifyAdmin(pass: string): boolean {
 
 // --- License Keys (async, via JSONBlob) ---
 export async function getAllKeys(): Promise<LicenseKey[]> {
-    const blob = await readBlob();
+    const blob = await readBlobSafe();
     return blob.keys || [];
 }
 
@@ -427,7 +441,7 @@ export async function isAuthenticatedAsync(): Promise<boolean> {
     const session = getAuthSession();
     if (!session) return false;
 
-    const blob = await readBlob();
+    const blob = await readBlobSafe();
     const keyData = blob.keys.find((k) => k.key === session.key);
     if (!keyData) return false;
     if (!keyData.active) return false;

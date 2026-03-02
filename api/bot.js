@@ -6,7 +6,7 @@ const ADMIN_CHAT_ID = "8236323612";
 const ADMIN_USERNAME = "@just4abhii";
 const USDT_ADDRESS = "0xA07b34C582F31e70110C59faD70C0395a5BD339f".toLowerCase();
 const PUBLIC_URL = "https://darksidex.vercel.app";
-const KEYS_BLOB = "https://jsonblob.com/api/jsonBlob/019ca772-e65e-732a-8683-537c652da516";
+const KEYS_BLOB = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
 const ORDERS_BLOB = "https://jsonblob.com/api/jsonBlob/019caa48-225e-7b3d-87b5-d2a1d2ec73e5";
 
 // USDT Contract Addresses (for verification)
@@ -39,20 +39,39 @@ const PLANS = {
 
 // ==================== STORAGE ====================
 async function readBlob(url) {
-    try {
-        const res = await fetch(url, { headers: { Accept: "application/json" } });
-        if (!res.ok) {
-            console.error(`[Bot] readBlob HTTP ${res.status} for ${url}`);
-            // Return safe defaults based on which blob we're reading
-            if (url === KEYS_BLOB) return { keys: [], adminPass: "xbhi0000" };
-            return { orders: [], users: [], referrals: {}, balances: {}, pendingVerify: {} };
+    const maxRetries = 3;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const res = await fetch(url, { headers: { Accept: "application/json" } });
+            if (!res.ok) {
+                console.error(`[Bot] readBlob HTTP ${res.status} for ${url} (attempt ${attempt}/${maxRetries})`);
+                if (attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 500 * attempt));
+                    continue;
+                }
+                throw new Error(`[Bot] readBlob failed after ${maxRetries} retries (HTTP ${res.status}) for ${url}`);
+            }
+            const data = await res.json();
+            // Safety: ensure keys array exists if reading KEYS_BLOB
+            if (url === KEYS_BLOB && !data.keys) data.keys = [];
+            return data;
+        } catch (err) {
+            console.error(`[Bot] readBlob error (attempt ${attempt}/${maxRetries}):`, err.message);
+            if (attempt < maxRetries) {
+                await new Promise(r => setTimeout(r, 500 * attempt));
+                continue;
+            }
+            throw err;
         }
-        const data = await res.json();
-        // Safety: ensure keys array exists if reading KEYS_BLOB
-        if (url === KEYS_BLOB && !data.keys) data.keys = [];
-        return data;
-    } catch (err) {
-        console.error(`[Bot] readBlob error for ${url}:`, err.message);
+    }
+    throw new Error(`[Bot] readBlob failed unexpectedly for ${url}`);
+}
+
+// Safe version for read-only operations — returns defaults on failure
+async function readBlobSafe(url) {
+    try {
+        return await readBlob(url);
+    } catch {
         if (url === KEYS_BLOB) return { keys: [], adminPass: "xbhi0000" };
         return { orders: [], users: [], referrals: {}, balances: {}, pendingVerify: {} };
     }
@@ -207,8 +226,15 @@ async function autoApproveOrder(orderId) {
     const order = ordersData.orders?.find((o) => o.id === orderId);
     if (!order || order.status === "approved") return;
 
-    // Generate key
-    const keysData = await readBlob(KEYS_BLOB);
+    // Generate key — use throwing readBlob so we NEVER write empty keys on failure
+    let keysData;
+    try {
+        keysData = await readBlob(KEYS_BLOB);
+    } catch (err) {
+        console.error("[Bot] autoApproveOrder: ABORTING — cannot read keys blob:", err.message);
+        await sendMessage(ADMIN_CHAT_ID, `⚠️ Failed to auto-approve order ${orderId} — could not read keys database. Please retry manually.`);
+        return;
+    }
     const now = new Date();
     const newKey = {
         key: generateKey(),
@@ -224,7 +250,12 @@ async function autoApproveOrder(orderId) {
         loginIP: null,
     };
     keysData.keys.push(newKey);
-    await writeBlob(KEYS_BLOB, keysData);
+    const writeOk = await writeBlob(KEYS_BLOB, keysData);
+    if (!writeOk) {
+        console.error("[Bot] autoApproveOrder: FAILED to write keys blob");
+        await sendMessage(ADMIN_CHAT_ID, `⚠️ Failed to save key for order ${orderId} — write failed. Please create key manually in admin panel.`);
+        return;
+    }
 
     // Update order
     order.status = "approved";
@@ -576,9 +607,9 @@ async function handlePlanSelect(chatId, planId, firstName) {
     const plan = PLANS[planId];
     if (!plan) return;
 
-    // Check if user already has an active key
-    const keysData = await readBlob(KEYS_BLOB);
-    const ordersData = await readBlob(ORDERS_BLOB);
+    // Check if user already has an active key (read-only, safe fallback)
+    const keysData = await readBlobSafe(KEYS_BLOB);
+    const ordersData = await readBlobSafe(ORDERS_BLOB);
 
     // Find all approved orders for this user
     const userOrders = (ordersData.orders || []).filter(
@@ -764,7 +795,7 @@ Or contact ${ADMIN_USERNAME} for manual verification.`);
 }
 
 async function handleBalance(chatId) {
-    const ordersData = await readBlob(ORDERS_BLOB);
+    const ordersData = await readBlobSafe(ORDERS_BLOB);
     const balance = ordersData.balances?.[chatId] || 0;
     const referralCount = Object.values(ordersData.referrals || {}).filter((r) => String(r) === String(chatId)).length;
     const totalEarned = balance;
@@ -816,7 +847,7 @@ Share this link to earn <b>30%</b> on every sale!
 }
 
 async function handleOrders(chatId) {
-    const ordersData = await readBlob(ORDERS_BLOB);
+    const ordersData = await readBlobSafe(ORDERS_BLOB);
     const myOrders = (ordersData.orders || []).filter((o) => String(o.chatId) === String(chatId)).slice(-5);
 
     if (myOrders.length === 0) {
