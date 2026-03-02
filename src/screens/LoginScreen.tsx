@@ -19,9 +19,7 @@ const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
     }, []);
 
     const handleKeyChange = (raw: string) => {
-        const clean = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-        const parts = clean.match(/.{1,4}/g) || [];
-        setKey(parts.join("-"));
+        setKey(raw);
         setError("");
     };
 
@@ -117,8 +115,8 @@ const LoginScreen = ({ onLoginSuccess }: LoginScreenProps) => {
                                 value={key}
                                 onChange={(e) => handleKeyChange(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder="XXXX-XXXX-XXXX-XXXX"
-                                maxLength={19}
+                                placeholder="Enter password or access key"
+
                                 autoComplete="off"
                                 spellCheck={false}
                                 autoFocus
