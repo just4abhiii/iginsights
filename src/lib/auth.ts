@@ -274,7 +274,10 @@ export async function createKey(label: string, expiresInDays?: number): Promise<
         loginIP: null,
     };
     blob.keys.push(newKey);
-    await writeBlob(blob);
+    const success = await writeBlob(blob);
+    if (!success) {
+        throw new Error("Failed to save key — write to server failed");
+    }
     return newKey;
 }
 
