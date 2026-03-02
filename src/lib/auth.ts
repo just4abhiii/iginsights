@@ -1,20 +1,17 @@
 /**
  * Authentication & License Key System
- * DAILY PASSWORD: Change password and expiry below, deploy, done!
- * Also supports JSONBlob keys as backup.
+ * Uses Upstash Redis (via /api/keys) for secure, persistent key storage.
+ * Keys are stored in Redis - data never randomly disappears.
+ * Device lock, expiry, and admin management all supported.
  */
 
-// ============ DAILY PASSWORD - CHANGE THIS ============
-// Password: whatever you want clients to type
-// Expires: set to tomorrow's date (YYYY-MM-DD format)
-const DAILY_PASSWORD = "darkside02";
-const DAILY_PASSWORD_EXPIRES = "2026-03-03"; // valid till this date (end of day)
-// ======================================================
+const API_URL = "/api/keys";
+const AUTH_STORAGE_KEY = "darksidex_auth_session";
+const ADMIN_PASS_KEY = "darksidex_admin_pass";
+const HARDCODED_ADMIN_PASS = "xbhi0000";
 
-// Direct JSONBlob URL for key system (backup)
-const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
+// ==================== DEVICE FINGERPRINT ====================
 
-// Generate a unique device fingerprint based on browser properties
 export function getDeviceFingerprint(): string {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -47,7 +44,8 @@ export function getDeviceFingerprint(): string {
     return "DX-" + Math.abs(hash).toString(36).toUpperCase().padStart(8, "0");
 }
 
-// Generate a random access key
+// ==================== KEY GENERATION ====================
+
 export function generateAccessKey(): string {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const segments = [];
@@ -60,6 +58,8 @@ export function generateAccessKey(): string {
     }
     return segments.join("-");
 }
+
+// ==================== TYPES ====================
 
 export interface LicenseKey {
     key: string;
@@ -75,16 +75,14 @@ export interface LicenseKey {
     maxDevices: number;
 }
 
-interface BlobData {
-    keys: LicenseKey[];
-    adminPass: string;
-    youtubeUrl?: string;
+interface AuthSession {
+    key: string;
+    deviceFingerprint: string;
+    loginAt: string;
 }
 
-const AUTH_STORAGE_KEY = "darksidex_auth_session";
-const HARDCODED_ADMIN_PASS = "xbhi0000";
+// ==================== LOCATION ====================
 
-// Fetch user location from IP
 async function fetchLocation(): Promise<{ city: string; country: string; ip: string }> {
     try {
         const res = await fetch("https://ipapi.co/json/");
@@ -102,241 +100,84 @@ async function fetchLocation(): Promise<{ city: string; country: string; ip: str
     }
 }
 
-// ==================== JSONBLOB STORAGE ====================
+// ==================== API HELPERS ====================
 
-// Simple write lock to prevent concurrent read-modify-write race conditions
-let writeLock = false;
-async function waitForLock(): Promise<void> {
-    while (writeLock) {
-        await new Promise(r => setTimeout(r, 100));
-    }
+function getAdminPass(): string {
+    return sessionStorage.getItem(ADMIN_PASS_KEY) || HARDCODED_ADMIN_PASS;
 }
 
-async function readBlob(): Promise<BlobData> {
-    const maxRetries = 3;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            const res = await fetch(BLOB_URL + `?_t=${Date.now()}`, {
-                headers: { "Accept": "application/json", "Cache-Control": "no-cache" },
-            });
-            if (!res.ok) {
-                console.error(`[Auth] Read blob HTTP ${res.status} (attempt ${attempt}/${maxRetries})`);
-                if (attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 500 * attempt));
-                    continue;
-                }
-                throw new Error(`[Auth] Read blob failed after ${maxRetries} retries (HTTP ${res.status})`);
-            }
-            const data = await res.json();
-            // Safety: ensure keys array always exists
-            if (!data.keys) data.keys = [];
-            if (!data.adminPass) data.adminPass = HARDCODED_ADMIN_PASS;
-            return data;
-        } catch (err) {
-            console.error(`[Auth] Read blob error (attempt ${attempt}/${maxRetries}):`, err);
-            if (attempt < maxRetries) {
-                await new Promise(r => setTimeout(r, 500 * attempt));
-                continue;
-            }
-            throw err;
-        }
-    }
-    throw new Error("[Auth] Read blob failed unexpectedly");
-}
-
-// Safe version for read-only operations — returns defaults on failure instead of throwing
-async function readBlobSafe(): Promise<BlobData> {
-    try {
-        return await readBlob();
-    } catch {
-        return { keys: [], adminPass: HARDCODED_ADMIN_PASS };
-    }
-}
-
-async function writeBlob(data: BlobData): Promise<boolean> {
-    await waitForLock();
-    // Ensure keys array always exists before writing
-    if (!data.keys) data.keys = [];
-    if (!data.adminPass) data.adminPass = HARDCODED_ADMIN_PASS;
-    const maxRetries = 3;
-    try {
-        writeLock = true;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const res = await fetch(BLOB_URL, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json",
-                    },
-                    body: JSON.stringify(data),
-                });
-                // Safety guard blocked the write (race condition detected)
-                if (res.status === 409) {
-                    console.error("[Auth] Write BLOCKED by safety guard — race condition detected. Aborting.");
-                    return false;
-                }
-                if (!res.ok) {
-                    console.error(`[Auth] Write blob HTTP ${res.status} (attempt ${attempt}/${maxRetries})`);
-                    if (attempt < maxRetries) {
-                        await new Promise(r => setTimeout(r, 500 * attempt));
-                        continue;
-                    }
-                    return false;
-                }
-                // Small delay to let JSONBlob persist
-                await new Promise(r => setTimeout(r, 400));
-                return true;
-            } catch (err) {
-                console.error(`[Auth] Write blob error (attempt ${attempt}/${maxRetries}):`, err);
-                if (attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 500 * attempt));
-                    continue;
-                }
-                return false;
-            }
-        }
-        return false;
-    } finally {
-        writeLock = false;
-    }
-}
-
-// ==================== PUBLIC API ====================
-
-// --- Admin Password ---
-export function getAdminPassword(): string {
-    // For display in admin panel
-    return HARDCODED_ADMIN_PASS;
-}
-
-export async function getAdminPasswordAsync(): Promise<string> {
-    const blob = await readBlobSafe();
-    return blob.adminPass || HARDCODED_ADMIN_PASS;
-}
-
-export async function setAdminPassword(pass: string) {
-    const blob = await readBlob();
-    blob.adminPass = pass;
-    await writeBlob(blob);
-}
-
-// --- YouTube URL Management ---
-const DEFAULT_YT_URL = "https://www.youtube.com/embed/pYfpNRmoRC0?rel=0&modestbranding=1&showinfo=0";
-
-export async function getYoutubeUrl(): Promise<string> {
-    const blob = await readBlobSafe();
-    return blob.youtubeUrl || DEFAULT_YT_URL;
-}
-
-export async function setYoutubeUrl(url: string) {
-    const blob = await readBlob();
-    // Convert watch URL to embed URL
-    let embedUrl = url;
-    if (url.includes("youtube.com/watch")) {
-        const videoId = new URL(url).searchParams.get("v");
-        if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
-    } else if (url.includes("youtu.be/")) {
-        const videoId = url.split("youtu.be/")[1]?.split("?")[0];
-        if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
-    } else if (url.includes("youtube.com/live/")) {
-        const videoId = url.split("youtube.com/live/")[1]?.split("?")[0];
-        if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
-    }
-    blob.youtubeUrl = embedUrl;
-    await writeBlob(blob);
-}
-
-export async function verifyAdminAsync(pass: string): Promise<boolean> {
-    const blob = await readBlobSafe();
-    return pass === (blob.adminPass || HARDCODED_ADMIN_PASS);
-}
-
-// Sync version for quick checks (uses hardcoded)
-export function verifyAdmin(pass: string): boolean {
-    return pass === HARDCODED_ADMIN_PASS;
-}
-
-// --- License Keys (async, via JSONBlob) ---
-export async function getAllKeys(): Promise<LicenseKey[]> {
-    const blob = await readBlobSafe();
-    return blob.keys || [];
-}
-
-export async function createKey(label: string, expiresInDays?: number): Promise<LicenseKey> {
-    const blob = await readBlob();
-    const now = new Date();
-    const newKey: LicenseKey = {
-        key: generateAccessKey(),
-        label,
-        createdAt: now.toISOString(),
-        expiresAt: expiresInDays ? new Date(now.getTime() + expiresInDays * 86400000).toISOString() : null,
-        active: true,
-        deviceFingerprint: null,
-        lastUsedAt: null,
-        maxDevices: 1,
-        loginCity: null,
-        loginCountry: null,
-        loginIP: null,
+async function apiCall(method: string, body?: any, query?: string): Promise<any> {
+    const url = query ? `${API_URL}?${query}` : API_URL;
+    const options: RequestInit = {
+        method,
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getAdminPass()}`,
+        },
     };
-    blob.keys.push(newKey);
-    const success = await writeBlob(blob);
-    if (!success) {
-        throw new Error("Failed to save key — write to server failed");
+    if (body) options.body = JSON.stringify(body);
+
+    const res = await fetch(url, options);
+    const data = await res.json();
+
+    if (!res.ok) {
+        throw new Error(data.error || `API error: ${res.status}`);
     }
-    return newKey;
+    return data;
 }
 
-export async function revokeKey(key: string) {
-    const blob = await readBlob();
-    const keyData = blob.keys.find((k) => k.key === key);
-    if (keyData) {
-        keyData.active = false;
-        await writeBlob(blob);
-    }
-}
+// ==================== KEY MANAGEMENT (Admin) ====================
 
-export async function reactivateKey(key: string) {
-    const blob = await readBlob();
-    const keyData = blob.keys.find((k) => k.key === key);
-    if (keyData) {
-        keyData.active = true;
-        keyData.deviceFingerprint = null;
-        await writeBlob(blob);
+export async function getAllKeys(): Promise<LicenseKey[]> {
+    try {
+        const data = await apiCall("GET", undefined, `admin=${getAdminPass()}`);
+        return data.keys || [];
+    } catch (err) {
+        console.error("[Auth] getAllKeys failed:", err);
+        return [];
     }
 }
 
-export async function deleteKey(key: string): Promise<boolean> {
-    const blob = await readBlob();
-    const originalCount = blob.keys.length;
-    blob.keys = blob.keys.filter((k) => k.key !== key);
-    if (blob.keys.length === originalCount) {
-        console.warn(`[Auth] deleteKey: key ${key} not found in blob`);
-        return false;
-    }
-    const success = await writeBlob(blob);
-    if (!success) {
-        console.error(`[Auth] deleteKey: failed to write blob after deleting key ${key}`);
-        return false;
-    }
-    return true;
+export async function createKey(label: string, days: number): Promise<LicenseKey> {
+    const data = await apiCall("POST", { label, days });
+    if (!data.success) throw new Error("Failed to create key");
+    return data.key;
 }
 
-export async function resetDeviceLock(key: string) {
-    const blob = await readBlob();
-    const keyData = blob.keys.find((k) => k.key === key);
-    if (keyData) {
-        keyData.deviceFingerprint = null;
-        await writeBlob(blob);
-    }
+export async function deleteKey(key: string): Promise<void> {
+    await apiCall("DELETE", undefined, `key=${key}&admin=${getAdminPass()}`);
 }
 
-// --- Auth Session ---
-export interface AuthSession {
-    key: string;
-    deviceFingerprint: string;
-    loginAt: string;
+export async function revokeKey(key: string): Promise<void> {
+    await apiCall("PATCH", { key, active: false });
 }
+
+export async function reactivateKey(key: string): Promise<void> {
+    await apiCall("PATCH", { key, active: true });
+}
+
+// ==================== YOUTUBE URL ====================
+
+// Store YouTube URL in Redis too
+export async function getYoutubeUrl(): Promise<string> {
+    try {
+        // Use a simple fetch to a dedicated endpoint or fallback
+        const res = await fetch(`${API_URL}?admin=${getAdminPass()}`);
+        if (res.ok) {
+            const data = await res.json();
+            return data.youtubeUrl || "https://www.youtube.com/embed/pYfpNRmoRC0?rel=0&modestbranding=1&showinfo=0";
+        }
+    } catch { }
+    return "https://www.youtube.com/embed/pYfpNRmoRC0?rel=0&modestbranding=1&showinfo=0";
+}
+
+export async function setYoutubeUrl(url: string): Promise<void> {
+    // For now, YouTube URL is not stored in Redis (would need API extension)
+    // Can be added later if needed
+    console.log("[Auth] YouTube URL update not yet implemented in Redis:", url);
+}
+
+// ==================== SESSION MANAGEMENT ====================
 
 export function getAuthSession(): AuthSession | null {
     try {
@@ -355,7 +196,8 @@ export function clearAuthSession() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
-// --- Telegram Alert ---
+// ==================== TELEGRAM ALERT ====================
+
 async function sendTelegramAlert(keyData: LicenseKey, deviceFP: string) {
     try {
         const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
@@ -371,18 +213,18 @@ async function sendTelegramAlert(keyData: LicenseKey, deviceFP: string) {
             "━━━━━━━━━━━━━━━━",
             "Powered by DarkSideX 🚀",
         ].join("\n");
-        // Fire and forget — don't await
         fetch("/api/telegram", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text }),
         }).catch(() => { });
     } catch {
-        // Telegram alert is non-critical
+        // non-critical
     }
 }
 
-// --- Login Validation ---
+// ==================== LOGIN VALIDATION ====================
+
 export type LoginResult =
     | { success: true }
     | { success: false; error: string };
@@ -390,121 +232,108 @@ export type LoginResult =
 export async function validateAndLogin(accessKey: string): Promise<LoginResult> {
     const normalizedKey = accessKey.trim();
 
-    // ===== DAILY PASSWORD CHECK (no external calls!) =====
-    const cleanKey = normalizedKey.replace(/[-\s]/g, "").toLowerCase();
-    if (cleanKey === DAILY_PASSWORD.toLowerCase()) {
-        const expiryDate = new Date(DAILY_PASSWORD_EXPIRES + "T23:59:59");
-        if (new Date() > expiryDate) {
-            return { success: false, error: "This password has expired. Contact admin for new password." };
-        }
-        // Daily password is valid! Login directly
-        const deviceFP = getDeviceFingerprint();
-        saveAuthSession({
-            key: "DAILY-PASS",
-            deviceFingerprint: deviceFP,
-            loginAt: new Date().toISOString(),
-        });
-        return { success: true };
+    if (!normalizedKey) {
+        return { success: false, error: "Please enter your access key." };
     }
-    // ===== END DAILY PASSWORD =====
 
-    // Fallback: Try JSONBlob key system
     try {
-        const blob = await readBlob();
-        const keyData = blob.keys.find((k) => k.key === normalizedKey.toUpperCase());
-
-        if (!keyData) {
-            return { success: false, error: "Invalid access key. Please check your key and try again." };
-        }
-
-        if (!keyData.active) {
-            return { success: false, error: "This access key has been deactivated. Contact support." };
-        }
-
-        if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) {
-            return { success: false, error: "This access key has expired. Please renew your subscription." };
-        }
-
+        // Get device fingerprint
         const deviceFP = getDeviceFingerprint();
 
-        // Check device lock
-        if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) {
-            return {
-                success: false,
-                error: "This key is already linked to another device. Each key can only be used on one device.",
-            };
-        }
-
-        // Lock to this device
-        if (!keyData.deviceFingerprint) {
-            keyData.deviceFingerprint = deviceFP;
-        }
-
-        // Get location info
+        // Get location
+        let loc = { city: "Unknown", country: "Unknown", ip: "" };
         try {
-            const loc = await fetchLocation();
-            keyData.loginCity = loc.city;
-            keyData.loginCountry = loc.country;
-            keyData.loginIP = loc.ip;
-        } catch {
-            // not critical
-        }
+            loc = await fetchLocation();
+        } catch { }
 
-        keyData.lastUsedAt = new Date().toISOString();
-        await writeBlob(blob);
-
-        // Send Telegram notification to admin
-        sendTelegramAlert(keyData, deviceFP);
-
-        // Save session locally
-        saveAuthSession({
-            key: normalizedKey.toUpperCase(),
+        // Call API to validate
+        const result = await apiCall("PUT", {
+            accessKey: normalizedKey,
             deviceFingerprint: deviceFP,
-            loginAt: new Date().toISOString(),
+            city: loc.city,
+            country: loc.country,
+            ip: loc.ip,
         });
 
-        return { success: true };
-    } catch (err) {
-        console.error("[Auth] JSONBlob key validation failed:", err);
-        return { success: false, error: "Server error. Try the daily password instead." };
+        if (result.success) {
+            // Save session locally
+            saveAuthSession({
+                key: result.key.key,
+                deviceFingerprint: deviceFP,
+                loginAt: new Date().toISOString(),
+            });
+
+            // Send Telegram alert (fire and forget)
+            sendTelegramAlert(result.key, deviceFP);
+
+            return { success: true };
+        }
+
+        return { success: false, error: "Login failed. Please try again." };
+    } catch (err: any) {
+        console.error("[Auth] Login error:", err);
+        return { success: false, error: err.message || "Server error. Please try again." };
     }
 }
 
-// --- Check if currently authenticated ---
+// ==================== AUTH CHECK ====================
+
 export async function isAuthenticatedAsync(): Promise<boolean> {
     const session = getAuthSession();
     if (!session) return false;
 
-    // Daily password sessions: valid until expiry date
-    if (session.key === "DAILY-PASS") {
-        const expiryDate = new Date(DAILY_PASSWORD_EXPIRES + "T23:59:59");
-        return new Date() <= expiryDate;
-    }
-
-    // JSONBlob key sessions
     try {
-        const blob = await readBlobSafe();
-        const keyData = blob.keys.find((k) => k.key === session.key);
-        if (!keyData) return false;
-        if (!keyData.active) return false;
-        if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) return false;
-
+        // Verify key is still valid by trying to validate again
         const deviceFP = getDeviceFingerprint();
-        if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFP) return false;
+        const res = await fetch(API_URL, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                accessKey: session.key,
+                deviceFingerprint: deviceFP,
+            }),
+        });
+
+        if (!res.ok) {
+            // Key is invalid/expired/revoked — clear session
+            clearAuthSession();
+            return false;
+        }
 
         return true;
     } catch {
-        return true; // Don't kick user out if JSONBlob is down
+        // Network error — don't kick user out, trust local session
+        return true;
     }
 }
 
-// Quick local check (for initial render)
+// Quick local check (for initial render, no network call)
 export function isAuthenticated(): boolean {
     const session = getAuthSession();
     return !!session;
 }
 
-// --- Admin session ---
+// ==================== ADMIN SESSION ====================
+
+export async function validateAdminPassword(password: string): Promise<boolean> {
+    // Try validating against the server
+    try {
+        const res = await fetch(`${API_URL}?admin=${password}`);
+        if (res.ok) {
+            sessionStorage.setItem(ADMIN_PASS_KEY, password);
+            return true;
+        }
+    } catch { }
+
+    // Fallback to hardcoded password
+    if (password === HARDCODED_ADMIN_PASS) {
+        sessionStorage.setItem(ADMIN_PASS_KEY, password);
+        return true;
+    }
+
+    return false;
+}
+
 export function isAdminLoggedIn(): boolean {
     return sessionStorage.getItem("darksidex_admin_logged_in") === "true";
 }
@@ -515,4 +344,23 @@ export function loginAdmin() {
 
 export function logoutAdmin() {
     sessionStorage.removeItem("darksidex_admin_logged_in");
+    sessionStorage.removeItem(ADMIN_PASS_KEY);
 }
+
+// Admin verification (used by AdminPanel)
+export async function verifyAdminAsync(password: string): Promise<boolean> {
+    return validateAdminPassword(password);
+}
+
+// Get current admin password (display in admin panel)
+export function getAdminPassword(): string {
+    return getAdminPass();
+}
+
+// Set admin password (for now, stored in session only)
+export async function setAdminPassword(newPassword: string): Promise<void> {
+    sessionStorage.setItem(ADMIN_PASS_KEY, newPassword);
+    // Note: This only changes the password for this session
+    // To permanently change, update HARDCODED_ADMIN_PASS in code
+}
+

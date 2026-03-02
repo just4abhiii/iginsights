@@ -1,64 +1,195 @@
-// Vercel Serverless Function: Proxy to JSONBlob for license key storage
-// Handles CORS and acts as a bridge between browser and JSONBlob
+/**
+ * Vercel Serverless Function: Key Management API
+ * Uses Upstash Redis for secure, persistent key storage
+ * 
+ * Endpoints:
+ * GET    /api/keys              → List all keys (admin only, needs ?admin=PASSWORD)
+ * POST   /api/keys              → Create a new key (admin only)
+ * DELETE /api/keys?key=XXX      → Delete a key (admin only)
+ * PUT    /api/keys              → Validate & login with a key (public)
+ * PATCH  /api/keys              → Revoke/reactivate a key (admin only)
+ */
 
-const BLOB_URL = "https://jsonblob.com/api/jsonBlob/019cace4-dd9d-783f-8b04-2aa74eae247b";
+import { Redis } from "@upstash/redis";
 
-const DEFAULT_DATA = {
-    keys: [],
-    adminPass: "xbhi0000",
-    youtubeUrl: "https://www.youtube.com/embed/pYfpNRmoRC0?rel=0&modestbranding=1&showinfo=0",
+const redis = new Redis({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+});
+
+const ADMIN_PASS = process.env.ADMIN_PASS || "xbhi0000";
+const CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Cache-Control": "no-store, no-cache, must-revalidate",
 };
 
-export default async function handler(req, res) {
-    // CORS headers
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Cache-Control");
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+function json(res, status, data) {
+    Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+    return res.status(status).json(data);
+}
 
+function isAdmin(req) {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith("Bearer ")) {
+        return auth.slice(7) === ADMIN_PASS;
+    }
+    return req.query?.admin === ADMIN_PASS;
+}
+
+// Generate a random access key
+function generateKey() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const segs = [];
+    for (let s = 0; s < 4; s++) {
+        let seg = "";
+        for (let i = 0; i < 4; i++) seg += chars[Math.floor(Math.random() * chars.length)];
+        segs.push(seg);
+    }
+    return segs.join("-");
+}
+
+export default async function handler(req, res) {
+    // Handle CORS preflight
     if (req.method === "OPTIONS") {
-        return res.status(200).end();
+        Object.entries(CORS_HEADERS).forEach(([k, v]) => res.setHeader(k, v));
+        return res.status(204).end();
     }
 
     try {
+        // ===== GET: List all keys (admin only) =====
         if (req.method === "GET") {
-            const response = await fetch(BLOB_URL, {
-                headers: { Accept: "application/json", "Cache-Control": "no-cache" },
-            });
-            if (!response.ok) {
-                console.error(`[keys] GET blob returned ${response.status}, returning defaults`);
-                return res.status(200).json(DEFAULT_DATA);
+            if (!isAdmin(req)) {
+                return json(res, 401, { error: "Unauthorized" });
             }
-            const data = await response.json();
-            if (!data.keys) data.keys = [];
-            if (!data.adminPass) data.adminPass = DEFAULT_DATA.adminPass;
-            return res.status(200).json(data);
+            const allKeys = await redis.smembers("keys:all") || [];
+            const keys = [];
+            for (const k of allKeys) {
+                const data = await redis.get(`key:${k}`);
+                if (data) keys.push(typeof data === "string" ? JSON.parse(data) : data);
+            }
+            return json(res, 200, { keys, adminPass: ADMIN_PASS });
         }
 
+        // ===== POST: Create a new key (admin only) =====
+        if (req.method === "POST") {
+            if (!isAdmin(req)) {
+                return json(res, 401, { error: "Unauthorized" });
+            }
+            const { label, days } = req.body;
+            const key = generateKey();
+            const now = new Date();
+            const expiresAt = days === 0 ? null : new Date(now.getTime() + (days || 7) * 86400000).toISOString();
+
+            const keyData = {
+                key,
+                label: label || `Key (${days || 7}d)`,
+                createdAt: now.toISOString(),
+                expiresAt,
+                active: true,
+                deviceFingerprint: null,
+                lastUsedAt: null,
+                maxDevices: 1,
+                loginCity: null,
+                loginCountry: null,
+                loginIP: null,
+            };
+
+            // Store key data and add to set
+            await redis.set(`key:${key}`, JSON.stringify(keyData));
+            await redis.sadd("keys:all", key);
+
+            // Set auto-expiry in Redis if key has expiry
+            if (expiresAt) {
+                const ttlSeconds = Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / 1000);
+                // Add 1 day buffer so we can still show "expired" message
+                await redis.expire(`key:${key}`, ttlSeconds + 86400);
+            }
+
+            return json(res, 201, { success: true, key: keyData });
+        }
+
+        // ===== PUT: Validate & login (public) =====
         if (req.method === "PUT") {
-            const body = req.body || {};
-            if (!body.keys) body.keys = [];
-            if (!body.adminPass) body.adminPass = DEFAULT_DATA.adminPass;
-
-            const response = await fetch(BLOB_URL, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                body: JSON.stringify(body),
-            });
-            if (!response.ok) {
-                const errText = await response.text();
-                console.error("[keys] PUT error:", response.status, errText);
-                return res.status(response.status).json({ error: `JSONBlob PUT failed: ${response.status}` });
+            const { accessKey, deviceFingerprint, city, country, ip } = req.body;
+            if (!accessKey) {
+                return json(res, 400, { error: "Access key is required" });
             }
-            return res.status(200).json(body);
+
+            const normalizedKey = accessKey.trim().toUpperCase();
+            const raw = await redis.get(`key:${normalizedKey}`);
+            if (!raw) {
+                return json(res, 404, { error: "Invalid access key. Please check your key and try again." });
+            }
+
+            const keyData = typeof raw === "string" ? JSON.parse(raw) : raw;
+
+            if (!keyData.active) {
+                return json(res, 403, { error: "This access key has been deactivated. Contact support." });
+            }
+
+            if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) {
+                return json(res, 403, { error: "This access key has expired. Please renew your subscription." });
+            }
+
+            // Device lock check
+            if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFingerprint) {
+                return json(res, 403, {
+                    error: "This key is already linked to another device. Each key can only be used on one device.",
+                });
+            }
+
+            // Lock to this device on first use
+            if (!keyData.deviceFingerprint && deviceFingerprint) {
+                keyData.deviceFingerprint = deviceFingerprint;
+            }
+
+            // Update login info
+            keyData.lastUsedAt = new Date().toISOString();
+            if (city) keyData.loginCity = city;
+            if (country) keyData.loginCountry = country;
+            if (ip) keyData.loginIP = ip;
+
+            // Save updated key data
+            await redis.set(`key:${normalizedKey}`, JSON.stringify(keyData));
+
+            return json(res, 200, { success: true, key: keyData });
         }
 
-        return res.status(405).json({ error: "Method not allowed" });
+        // ===== DELETE: Delete a key (admin only) =====
+        if (req.method === "DELETE") {
+            if (!isAdmin(req)) {
+                return json(res, 401, { error: "Unauthorized" });
+            }
+            const keyToDelete = req.query?.key;
+            if (!keyToDelete) {
+                return json(res, 400, { error: "Key parameter required" });
+            }
+            await redis.del(`key:${keyToDelete}`);
+            await redis.srem("keys:all", keyToDelete);
+            return json(res, 200, { success: true, deleted: keyToDelete });
+        }
+
+        // ===== PATCH: Revoke/reactivate a key (admin only) =====
+        if (req.method === "PATCH") {
+            if (!isAdmin(req)) {
+                return json(res, 401, { error: "Unauthorized" });
+            }
+            const { key: targetKey, active } = req.body;
+            const raw = await redis.get(`key:${targetKey}`);
+            if (!raw) {
+                return json(res, 404, { error: "Key not found" });
+            }
+            const keyData = typeof raw === "string" ? JSON.parse(raw) : raw;
+            keyData.active = active;
+            await redis.set(`key:${targetKey}`, JSON.stringify(keyData));
+            return json(res, 200, { success: true, key: keyData });
+        }
+
+        return json(res, 405, { error: "Method not allowed" });
     } catch (err) {
-        console.error("[keys] Proxy error:", err);
-        return res.status(500).json({ error: "Proxy failed", message: err.message });
+        console.error("[API/keys] Error:", err);
+        return json(res, 500, { error: "Internal server error" });
     }
 }
