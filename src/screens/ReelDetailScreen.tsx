@@ -262,22 +262,22 @@ const ReelDetailScreen = () => {
       </div>
 
       {/* Right side actions */}
-      <div className="absolute right-4 bottom-[120px] flex flex-col items-center gap-5 z-10">
+      <div className="absolute right-6 bottom-[120px] flex flex-col items-center gap-6 z-10">
         {/* Heart */}
         <button onClick={() => setLiked(!liked)} className="flex flex-col items-center gap-0.5">
-          <Heart size={28} className={cn(liked ? "fill-[#FF3040] text-[#FF3040]" : "text-white")} />
-          <span className="text-[11px] text-white font-semibold">{stats.likes}</span>
+          <Heart size={32} className={cn(liked ? "fill-[#FF3040] text-[#FF3040]" : "text-white")} />
+          <span className="text-[12px] text-white font-semibold">{stats.likes}</span>
         </button>
         {/* Comment */}
         <button className="flex flex-col items-center gap-0.5">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)" }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "scaleX(-1)" }}>
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>
-          <span className="text-[11px] text-white font-semibold">{stats.comments}</span>
+          <span className="text-[12px] text-white font-semibold">{stats.comments}</span>
         </button>
         {/* Repost */}
         <button className="flex flex-col items-center gap-0.5">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 12V9a4 4 0 0 1 4-4h14" />
             <polyline points="7 23 3 19 7 15" />
@@ -286,24 +286,24 @@ const ReelDetailScreen = () => {
         </button>
         {/* Send */}
         <button className="flex flex-col items-center gap-0.5">
-          <svg width="26" height="26" viewBox="0 0 24 24">
+          <svg width="30" height="30" viewBox="0 0 24 24">
             <path d="M21.39 2.97c.46-.46.06-1.24-.56-1.06L2.42 6.86c-.56.16-.6.95-.06 1.18l6.93 2.97 6.18-4.47c.24-.18.5.1.3.32l-4.47 6.18 2.97 6.93c.22.54 1.02.5 1.18-.06l4.94-18.41c.04-.14.02-.28-.04-.4l.04-.13z" fill="none" stroke="white" strokeWidth="1.2" />
           </svg>
-          <span className="text-[11px] text-white font-semibold">{stats.sends}</span>
+          <span className="text-[12px] text-white font-semibold">{stats.sends}</span>
         </button>
         {/* Bookmark */}
         <button onClick={() => setSaved(!saved)} className="flex flex-col items-center gap-0.5">
-          <svg width="28" height="28" viewBox="0 0 24 24">
+          <svg width="32" height="32" viewBox="0 0 24 24">
             <path d="M4 2h16v20l-8-5.5L4 22V2z" fill={saved ? 'white' : 'none'} stroke="white" strokeWidth="1.5" />
           </svg>
-          <span className="text-[11px] text-white font-semibold">{stats.saves}</span>
+          <span className="text-[12px] text-white font-semibold">{stats.saves}</span>
         </button>
         {/* 3 dots */}
         <button className="text-white">
-          <MoreVertical size={22} />
+          <MoreVertical size={26} />
         </button>
-        {/* Music disc / profile pic — small spinning disc like IG */}
-        <div className="w-[28px] h-[28px] rounded-[6px] border-[1.5px] border-white/40 overflow-hidden">
+        {/* Music disc / profile pic */}
+        <div className="w-[32px] h-[32px] rounded-[6px] border-[1.5px] border-white/40 overflow-hidden">
           {reelMusicTitle && reelMusicIcon ? (
             <img src={reelMusicIcon} alt="" className="w-full h-full object-cover" />
           ) : (
