@@ -24,9 +24,8 @@ const ReelsIcon = ({ size = 26, active = false }: { size?: number; active?: bool
 
 // Instagram Messenger/DM icon - paper plane style
 const MessengerIcon = ({ size = 26, active = false }: { size?: number; active?: boolean }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 2L11 13" />
-    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <path d="M21.39 2.97c.46-.46.06-1.24-.56-1.06L2.42 6.86c-.56.16-.6.95-.06 1.18l6.93 2.97 6.18-4.47c.24-.18.5.1.3.32l-4.47 6.18 2.97 6.93c.22.54 1.02.5 1.18-.06l4.94-18.41c.04-.14.02-.28-.04-.4l.04-.13z" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" />
   </svg>
 );
 
