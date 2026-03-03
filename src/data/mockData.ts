@@ -20,6 +20,8 @@ export interface Post {
   isBookmarked?: boolean;
   isVerified?: boolean;
   location?: string;
+  videoUrl?: string;
+  isVideo?: boolean;
 }
 
 export interface ExploreItem {
@@ -533,7 +535,7 @@ const loadProfileOverrides = () => {
         currentUser.isVerified = syncFrom.profile.isVerified;
       }
     }
-  } catch {}
+  } catch { }
 };
 
 export const saveProfileOverrides = () => {
@@ -552,7 +554,7 @@ export const saveProfileOverrides = () => {
       };
     }
     localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(overrides));
-  } catch {}
+  } catch { }
 };
 
 // Load on module init
@@ -567,4 +569,41 @@ export const findMockAccount = (username: string): MockAccount | null => {
   const partial = Object.keys(mockAccounts).find(k => k.toLowerCase().includes(lower));
   if (partial) return mockAccounts[partial];
   return null;
+};
+
+// --- Feed Videos (uploaded by user, shown on home page) ---
+export interface FeedVideo {
+  id: string;
+  videoUrl: string;
+  username: string;
+  avatar: string;
+  caption: string;
+  likes: number;
+  comments: number;
+  timeAgo: string;
+  isVerified?: boolean;
+}
+
+const FEED_VIDEOS_KEY = "ig_feed_videos";
+
+export const loadFeedVideos = (): FeedVideo[] => {
+  try {
+    const saved = localStorage.getItem(FEED_VIDEOS_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch { return []; }
+};
+
+export const saveFeedVideo = (video: FeedVideo) => {
+  try {
+    const existing = loadFeedVideos();
+    existing.unshift(video);
+    localStorage.setItem(FEED_VIDEOS_KEY, JSON.stringify(existing));
+  } catch { }
+};
+
+export const removeFeedVideo = (id: string) => {
+  try {
+    const existing = loadFeedVideos().filter(v => v.id !== id);
+    localStorage.setItem(FEED_VIDEOS_KEY, JSON.stringify(existing));
+  } catch { }
 };

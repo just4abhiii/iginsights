@@ -13,7 +13,7 @@ import { useState, useCallback, useEffect } from "react";
 import { isAuthenticated, isAuthenticatedAsync, clearAuthSession } from "@/lib/auth";
 import HomeScreen from "@/screens/HomeScreen";
 import SearchScreen from "@/screens/SearchScreen";
-import CreateScreen from "@/screens/CreateScreen";
+import MessagesScreen from "@/screens/MessagesScreen";
 import ReelsScreen from "@/screens/ReelsScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import AnalyticsScreen from "@/screens/AnalyticsScreen";
@@ -107,7 +107,7 @@ const App = () => {
                       <Routes>
                         <Route path="/" element={<HomeScreen />} />
                         <Route path="/search" element={<SearchScreen />} />
-                        <Route path="/create" element={<CreateScreen />} />
+                        <Route path="/create" element={<MessagesScreen />} />
                         <Route path="/reels" element={<ReelsScreen />} />
                         <Route path="/profile" element={<ProfileScreen />} />
                         <Route path="/analytics" element={<AnalyticsScreen />} />
