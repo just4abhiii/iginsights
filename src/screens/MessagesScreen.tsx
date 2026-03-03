@@ -1,7 +1,6 @@
-import { useState, useRef, useCallback } from "react";
-import { ChevronLeft, Edit, Camera, Search, Phone, Video } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ChevronLeft, Edit, Camera, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { currentUser, mockAccounts } from "@/data/mockData";
 
@@ -278,6 +277,30 @@ const mockChats: ChatItem[] = [
     },
 ];
 
+// Device-based seeded shuffle
+const getDeviceSeed = () => {
+    const ua = navigator.userAgent || '';
+    const screen = `${window.screen.width}x${window.screen.height}`;
+    let hash = 0;
+    const str = ua + screen + (navigator.language || '');
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+};
+
+const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
+    const shuffled = [...arr];
+    let s = seed;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        s = (s * 1103515245 + 12345) & 0x7fffffff;
+        const j = s % (i + 1);
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+};
+
 // Online friends shown at top
 const onlineFriends = mockChats.filter((c) => c.isOnline).slice(0, 8);
 
@@ -289,21 +312,19 @@ const MessagesScreen = () => {
     const userAccount = mockAccounts["just4abhii"];
     const username = userAccount?.profile?.username || currentUser.username;
 
+    // Shuffle chats per device so each device shows different order
+    const shuffledChats = useMemo(() => seededShuffle(mockChats, getDeviceSeed()), []);
+
     const filteredChats = searchQuery
-        ? mockChats.filter(
+        ? shuffledChats.filter(
             (c) =>
                 c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 c.fullName.toLowerCase().includes(searchQuery.toLowerCase())
         )
-        : mockChats;
+        : shuffledChats;
 
     return (
-        <motion.div
-            className="pb-16 min-h-screen bg-background"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.15 }}
-        >
+        <div className="pb-16 min-h-screen bg-background">
             {/* Header */}
             <header className="sticky top-0 z-40 bg-background">
                 <div className="flex items-center justify-between px-4 py-2.5">
@@ -409,10 +430,7 @@ const MessagesScreen = () => {
                     >
                         Primary
                         {activeTab === "primary" && (
-                            <motion.div
-                                layoutId="msgTab"
-                                className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-foreground"
-                            />
+                            <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-foreground" />
                         )}
                     </button>
                     <button
@@ -426,10 +444,7 @@ const MessagesScreen = () => {
                     >
                         General
                         {activeTab === "general" && (
-                            <motion.div
-                                layoutId="msgTab"
-                                className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-foreground"
-                            />
+                            <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-foreground" />
                         )}
                     </button>
                 </div>
@@ -438,11 +453,8 @@ const MessagesScreen = () => {
             {/* Chat list */}
             <div className="divide-y-0">
                 {filteredChats.map((chat, index) => (
-                    <motion.button
+                    <button
                         key={chat.id}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.015 }}
                         className="flex items-center gap-3 w-full px-4 py-2.5 active:bg-secondary/50 transition-colors text-left"
                     >
                         {/* Avatar with online indicator */}
@@ -542,10 +554,10 @@ const MessagesScreen = () => {
                                 />
                             )}
                         </div>
-                    </motion.button>
+                    </button>
                 ))}
             </div>
-        </motion.div>
+        </div>
     );
 };
 

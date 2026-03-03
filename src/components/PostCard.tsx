@@ -101,7 +101,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
   return (
     <>
-      <article className="border-b border-border">
+      <article>
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-2.5">

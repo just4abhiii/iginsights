@@ -1,8 +1,31 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+// Device-based seeded shuffle - different order on each device
+const getDeviceSeed = () => {
+  const ua = navigator.userAgent || '';
+  const screen = `${window.screen.width}x${window.screen.height}`;
+  let hash = 0;
+  const str = ua + screen + (navigator.language || '');
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
+  const shuffled = [...arr];
+  let s = seed;
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const j = s % (i + 1);
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 // Curated explore images that actually load well from Unsplash
 const exploreGrid = [
@@ -38,17 +61,15 @@ const exploreGrid = [
 const SearchScreen = () => {
   const [query, setQuery] = useState("");
 
+  // Shuffle images differently per device
+  const shuffledGrid = useMemo(() => seededShuffle(exploreGrid, getDeviceSeed()), []);
+
   const filteredItems = query
-    ? exploreGrid.filter((_, i) => i % 2 === 0)
-    : exploreGrid;
+    ? shuffledGrid.filter((_, i) => i % 2 === 0)
+    : shuffledGrid;
 
   return (
-    <motion.div
-      className="pb-16"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.15 }}
-    >
+    <div className="pb-16">
       {/* Search Bar - Instagram Meta AI style */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-md px-4 py-2">
         <div className="relative">
@@ -149,7 +170,7 @@ const SearchScreen = () => {
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
