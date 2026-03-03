@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo } from "react";
-import { Heart, Plus, Video } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import StoryCircle from "@/components/StoryCircle";
 import StoryViewer from "@/components/StoryViewer";
@@ -142,15 +142,7 @@ const HomeScreen = () => {
           </svg>
         </button>
         <InstagramLogo />
-        <div className="flex items-center gap-3">
-          {/* Video Upload Button */}
-          <button
-            onClick={() => videoInputRef.current?.click()}
-            className="relative text-foreground active:scale-90 transition-transform"
-            title="Upload Video"
-          >
-            <Video size={28} strokeWidth={1.5} />
-          </button>
+        <div className="flex items-center">
           <button className="relative text-foreground active:scale-90 transition-transform">
             <Heart size={30} strokeWidth={1.5} />
             <span className="absolute -right-0.5 -top-0.5 h-[8px] w-[8px] rounded-full bg-[hsl(var(--ig-like))]" />
