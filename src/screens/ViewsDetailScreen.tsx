@@ -160,7 +160,7 @@ const ViewsDetailScreen = () => {
       >
         {/* Date line */}
         <div className="flex items-center justify-between px-4 py-3 mt-1">
-          <button className="flex items-center gap-1.5 bg-secondary/60 rounded-[10px] px-3 py-1.5 text-[14px] text-foreground font-semibold">
+          <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
             {isEditing ? (
                <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
             ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
@@ -194,7 +194,7 @@ const ViewsDetailScreen = () => {
                 strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[13px] text-muted-foreground font-medium mb-1">Views</span>
+              <span className="text-[14px] text-muted-foreground font-medium mb-1">Views</span>
               {isEditing ? (
                 <input 
                   type="number"
@@ -203,7 +203,7 @@ const ViewsDetailScreen = () => {
                   className="text-[28px] font-bold text-foreground bg-secondary/50 rounded px-1 outline-none w-28 text-center"
                 />
               ) : (
-                <span className="text-[34px] font-bold text-foreground tracking-tight">{formatCount(data.views)}</span>
+                <span className="text-[28px] font-bold text-foreground tracking-tight">{formatCount(data.views)}</span>
               )}
             </div>
           </div>
@@ -309,7 +309,7 @@ const ViewsDetailScreen = () => {
             <h3 className="text-[18px] font-bold text-foreground">Top content</h3>
             <button className="text-[15px] text-[#5B21B6] font-bold">See All</button>
           </div>
-          <p className="text-[13px] text-muted-foreground mb-6 font-medium">Based on reach</p>
+           <p className="text-[13px] text-muted-foreground font-bold mb-6">Based on reach</p>
           
           <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
             {data.topContent.map((item, i) => (
@@ -359,7 +359,7 @@ const ViewsDetailScreen = () => {
                         <div key={city.name}>
                             <p className="text-[14px] font-medium mb-1.5">{city.name}</p>
                             <div className="flex items-center gap-4">
-                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                <div className="flex-1 h-3 bg-secondary/30 dark:bg-[#262629] rounded-full overflow-hidden">
                                     <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${city.pct}%` }} />
                                 </div>
                                 <span className="text-[13px] font-bold w-10 text-right">{city.pct}%</span>
@@ -387,7 +387,7 @@ const ViewsDetailScreen = () => {
                         <div key={country.name}>
                             <p className="text-[14px] font-medium mb-1.5">{country.name}</p>
                             <div className="flex items-center gap-4">
-                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                <div className="flex-1 h-3 bg-secondary/30 dark:bg-[#262629] rounded-full overflow-hidden">
                                     <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${country.pct}%` }} />
                                 </div>
                                 <span className="text-[13px] font-bold w-10 text-right">{country.pct}%</span>
@@ -415,7 +415,7 @@ const ViewsDetailScreen = () => {
                         <div key={range.range}>
                             <p className="text-[14px] font-medium mb-1.5">{range.range}</p>
                             <div className="flex items-center gap-4">
-                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                <div className="flex-1 h-3 bg-secondary/30 dark:bg-[#262629] rounded-full overflow-hidden">
                                     <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${range.pct}%` }} />
                                 </div>
                                 <span className="text-[13px] font-bold w-10 text-right">{range.pct}%</span>
@@ -443,7 +443,7 @@ const ViewsDetailScreen = () => {
                         <div key={g.name}>
                             <p className="text-[14px] font-medium mb-1.5">{g.name}</p>
                             <div className="flex items-center gap-4">
-                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                <div className="flex-1 h-3 bg-secondary/30 dark:bg-[#262629] rounded-full overflow-hidden">
                                     <div className="h-full rounded-full" style={{ width: `${g.pct}%`, backgroundColor: g.color }} />
                                 </div>
                                 <span className="text-[13px] font-bold w-10 text-right">{g.pct}%</span>

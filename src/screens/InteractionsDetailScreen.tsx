@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, Info, ChevronDown, Check, Film, Plus } from "lucide-react";
+import { ArrowLeft, Info, ChevronDown, Check, Film, Plus, ChevronRight, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -124,7 +124,7 @@ const InteractionsDetailScreen = () => {
       >
         {/* Date Selector Row */}
         <div className="flex items-center justify-between px-4 py-2 mt-2">
-          <button className="flex items-center gap-1 bg-[#F2F2F2] rounded-[10px] px-3 py-1.5 text-[14px] font-bold">
+          <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
             {data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
           </button>
           <div className="text-[14px] font-bold text-black flex items-center gap-1">
@@ -156,7 +156,7 @@ const InteractionsDetailScreen = () => {
                 strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[14px] text-gray-400 font-medium mb-1">Interactions</span>
+              <span className="text-[14px] text-foreground/80 font-medium mb-1">Interactions</span>
               {isEditing ? (
                  <input 
                    type="number"
@@ -165,7 +165,7 @@ const InteractionsDetailScreen = () => {
                    className="text-[32px] font-bold text-black bg-gray-100 rounded px-1 outline-none w-32 text-center"
                  />
               ) : (
-                <span className="text-[40px] font-bold text-black tracking-tighter">{data.interactions.toLocaleString()}</span>
+                <span className="text-[32px] font-bold text-foreground tracking-tight">{data.interactions.toLocaleString()}</span>
               )}
             </div>
           </div>
@@ -203,7 +203,7 @@ const InteractionsDetailScreen = () => {
               {["All", "Followers", "Non-followers"].map(t => (
                 <button key={t} onClick={() => setContentTab(t)}
                   className={cn("px-5 py-2 rounded-full text-[14px] font-bold border transition-colors",
-                    contentTab === t ? "bg-[#F2F2F2] border-transparent" : "bg-white border-gray-200 text-black"
+                    contentTab === t ? "bg-white text-black border-transparent" : "bg-[#1C1C1E] text-white border-gray-800"
                   )}>
                   {t}
                 </button>
@@ -225,7 +225,7 @@ const InteractionsDetailScreen = () => {
                          )}
                       </div>
                    </div>
-                   <div className="h-3 w-full bg-[#F2F2F2] rounded-full flex overflow-hidden">
+                   <div className="h-3 w-full bg-secondary/30 dark:bg-[#262629] rounded-full flex overflow-hidden">
                       <div className="bg-[#B025C3]" style={{ width: `${type.followerPct}%` }} />
                       <div className="bg-[#4B12C2]" style={{ width: `${type.nonFollowerPct}%` }} />
                    </div>
@@ -252,11 +252,11 @@ const InteractionsDetailScreen = () => {
            <div className="flex justify-center gap-10 mt-10">
               <div className="flex items-center gap-2">
                  <div className="h-2 w-2 rounded-full bg-[#B025C3]" />
-                 <span className="text-[13px] text-gray-500 font-bold">Followers</span>
+                 <span className="text-[13px] text-foreground font-bold">Followers</span>
               </div>
               <div className="flex items-center gap-2">
                  <div className="h-2 w-2 rounded-full bg-[#4B12C2]" />
-                 <span className="text-[13px] text-gray-500 font-bold">Non-followers</span>
+                 <span className="text-[13px] text-foreground font-bold">Non-followers</span>
               </div>
            </div>
         </div>
@@ -287,7 +287,7 @@ const InteractionsDetailScreen = () => {
               <h3 className="text-[18px] font-bold">Top reels</h3>
               <button className="text-[15px] text-[#4B12C2] font-bold">See All</button>
            </div>
-           <p className="text-[13px] text-gray-500 font-bold mb-6">Based on likes</p>
+           <p className="text-[13px] text-foreground font-bold mb-6">Based on likes</p>
 
            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-4">
               {data.topReels.map((reel, i) => (
@@ -299,17 +299,17 @@ const InteractionsDetailScreen = () => {
                       <img src={reel.image} alt="" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30" />
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/95 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-sm">
-                         <Film size={12} fill="black" stroke="none" />
-                         <span className="text-[12px] font-bold">{reel.count}</span>
-                      </div>
+                          <Film size={12} fill="black" stroke="none" />
+                          <span className="text-[12px] font-bold text-black">{reel.count}</span>
+                       </div>
                       {isEditing && (
                          <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-2 gap-2">
-                            <input className="w-full bg-white text-black rounded text-center text-[10px] font-bold outline-none py-1" onClick={e => e.stopPropagation()} value={reel.count} onChange={e => {
+                            <input className="w-full bg-white text-foreground rounded text-center text-[10px] font-bold outline-none py-1" onClick={e => e.stopPropagation()} value={reel.count} onChange={e => {
                               const nt = [...data.topReels]; nt[i].count = e.target.value; updateField('topReels', nt);
                             }} />
-                            <div className="bg-white/80 p-1.5 rounded-full">
-                               <Plus size={16} className="text-black" />
-                            </div>
+                             <div className="bg-white/90 p-2 rounded-full shadow-lg border border-gray-200">
+                                <Camera size={18} className="text-[#0095f6]" />
+                             </div>
                          </div>
                       )}
                    </div>
@@ -319,7 +319,7 @@ const InteractionsDetailScreen = () => {
                            const nt = [...data.topReels]; nt[i].date = e.target.value; updateField('topReels', nt);
                         }} />
                       ) : (
-                        <span className="text-[12px] text-gray-500 font-bold">{reel.date}</span>
+                        <span className="text-[12px] text-muted-foreground font-bold">{reel.date}</span>
                       )}
                    </div>
                 </div>
