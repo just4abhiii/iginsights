@@ -214,7 +214,7 @@ const FollowersDetailScreen = () => {
               {["Overall", "Follows", "Unfollows"].map(t => (
                 <button key={t} onClick={() => setDetailTab(t)}
                   className={cn("px-5 py-2 rounded-full text-[14px] font-bold border transition-colors",
-                    detailTab === t ? "bg-white text-black border-transparent" : "bg-[#1C1C1E] text-white border-gray-800"
+                    detailTab === t ? "bg-white text-[#000000] border-transparent" : "bg-[#262626] text-white border-transparent"
                   )}>
                   {t}
                 </button>
@@ -283,7 +283,7 @@ const FollowersDetailScreen = () => {
                     <span className="text-[16px] font-extrabold">!</span>
                  </div>
               </div>
-              <p className="text-[14px] text-gray-300 font-medium leading-[1.4]">
+              <p className="text-[14px] text-white font-medium leading-[1.4]">
                  There was an error while loading your insights. Try again later.
               </p>
            </div>
@@ -295,14 +295,14 @@ const FollowersDetailScreen = () => {
         <div className="py-8">
            <div className="px-4 flex gap-2 mb-8">
                {["Top locations"].map(t => (
-                  <button key={t} className="px-5 py-2 rounded-full text-[14px] font-bold bg-white text-black">
+                  <button key={t} className="px-5 py-2 rounded-full text-[14px] font-bold bg-white text-[#000000]">
                     {t}
                   </button>
                ))}
            </div>
            <div className="px-4 flex gap-2 mb-8">
                 {["Towns/Cities", "Countries"].map(t => (
-                   <button key={t} className={cn("px-5 py-2 rounded-full text-[14px] font-bold border", t === "Towns/Cities" ? "bg-white text-black border-transparent" : "bg-[#1C1C1E] text-white border-gray-800")}>
+                   <button key={t} className={cn("px-5 py-2 rounded-full text-[14px] font-bold border transition-colors", t === "Towns/Cities" ? "bg-white text-[#000000] border-transparent" : "bg-[#262626] text-white border-transparent")}>
                      {t}
                    </button>
                 ))}
@@ -342,7 +342,7 @@ const FollowersDetailScreen = () => {
               {["All", "Men", "Women"].map(t => (
                  <button key={t} onClick={() => setAgeTab(t)}
                    className={cn("px-5 py-2 rounded-full text-[14px] font-bold border transition-colors",
-                     ageTab === t ? "bg-white text-black border-transparent" : "bg-[#1C1C1E] text-white border-gray-800"
+                     ageTab === t ? "bg-white text-[#000000] border-transparent" : "bg-[#262626] text-white border-transparent"
                    )}>
                    {t}
                  </button>

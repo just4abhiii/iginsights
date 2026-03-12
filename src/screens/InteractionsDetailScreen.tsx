@@ -203,7 +203,7 @@ const InteractionsDetailScreen = () => {
               {["All", "Followers", "Non-followers"].map(t => (
                 <button key={t} onClick={() => setContentTab(t)}
                   className={cn("px-5 py-2 rounded-full text-[14px] font-bold border transition-colors",
-                    contentTab === t ? "bg-white text-black border-transparent" : "bg-[#1C1C1E] text-white border-gray-800"
+                    contentTab === t ? "bg-white text-[#000000] border-transparent" : "bg-[#262626] text-white border-transparent"
                   )}>
                   {t}
                 </button>
@@ -252,11 +252,11 @@ const InteractionsDetailScreen = () => {
            <div className="flex justify-center gap-10 mt-10">
               <div className="flex items-center gap-2">
                  <div className="h-2 w-2 rounded-full bg-[#B025C3]" />
-                 <span className="text-[13px] text-foreground font-bold">Followers</span>
+                 <span className="text-[13px] text-white font-bold">Followers</span>
               </div>
               <div className="flex items-center gap-2">
                  <div className="h-2 w-2 rounded-full bg-[#4B12C2]" />
-                 <span className="text-[13px] text-foreground font-bold">Non-followers</span>
+                 <span className="text-[13px] text-white font-bold">Non-followers</span>
               </div>
            </div>
         </div>

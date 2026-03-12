@@ -161,14 +161,14 @@ const AnalyticsScreen = () => {
         {/* Your tools Section */}
         <div className="px-4 py-6">
            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-[17px] font-bold text-black">Your tools</h2>
+              <h2 className="text-[17px] font-bold text-foreground">Your tools</h2>
               <button className="text-[14px] text-[#0095f6] font-bold">See all</button>
            </div>
 
            <div className="space-y-6">
               {toolItems.map((tool, i) => (
                 <div key={i} className="flex items-center gap-4 group">
-                   <div className="text-black">
+                   <div className="text-foreground">
                       {tool.icon}
                    </div>
                    <div className="flex-1 flex items-center justify-between">
@@ -187,17 +187,17 @@ const AnalyticsScreen = () => {
                             </span>
                          )}
                       </div>
-                      <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
+                      <ChevronRight size={20} className="text-muted-foreground" strokeWidth={2.5} />
                    </div>
                 </div>
               ))}
            </div>
         </div>
 
-        <div className="h-[0.5px] bg-gray-100 w-full" />
+        <div className="h-[0.5px] bg-secondary/30 w-full" />
 
         <div className="px-4 py-8">
-           <h2 className="text-[17px] font-bold text-black">Tips and resources</h2>
+           <h2 className="text-[17px] font-bold text-foreground">Tips and resources</h2>
         </div>
       </div>
 
