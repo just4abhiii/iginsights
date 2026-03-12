@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, ChevronRight, Settings, Check, Megaphone, Handshake, Users } from "lucide-react";
+import { ArrowLeft, ChevronRight, Settings, Check, History, GraduationCap, Lightbulb, Share2, TrendingUp, Presentation, Sparkles, Contact2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -9,29 +9,21 @@ interface DashboardData {
   interactions: string;
   newFollowers: string;
   contentShared: string;
-  dateRange: string;
-  nextStepTitle: string;
-  nextStepSubtitle: string;
-  nextStepImage: string;
-  accountsReachedChange: string;
+  dateRangeLabel: string; // e.g., "10 Feb-11 Mar"
 }
 
 const defaultData: DashboardData = {
-  views: "11,565",
-  interactions: "7,026",
-  newFollowers: "228",
-  contentShared: "78",
-  dateRange: "Last 30 days",
-  nextStepTitle: "In-progress content",
-  nextStepSubtitle: "Keep creating! You're reaching more accounts.",
-  nextStepImage: "https://images.unsplash.com/photo-1611162147731-0cf47351586b?w=200&h=200&fit=crop",
-  accountsReachedChange: "+348%",
+  views: "11.6K",
+  interactions: "1.4K",
+  newFollowers: "54",
+  contentShared: "14",
+  dateRangeLabel: "10 Feb-11 Mar",
 };
 
 const AnalyticsScreen = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardData>(() => {
-    const saved = localStorage.getItem("ig_dashboard_data");
+    const saved = localStorage.getItem("ig_dashboard_data_v2");
     return saved ? JSON.parse(saved) : defaultData;
   });
 
@@ -51,7 +43,7 @@ const AnalyticsScreen = () => {
   }, []);
 
   const saveChanges = () => {
-    localStorage.setItem("ig_dashboard_data", JSON.stringify(data));
+    localStorage.setItem("ig_dashboard_data_v2", JSON.stringify(data));
     setIsEditing(false);
   };
 
@@ -59,20 +51,26 @@ const AnalyticsScreen = () => {
     setData(prev => ({ ...prev, [field]: value }));
   };
 
-  const insightRows = [
-    { label: "Accounts reached", value: data.views, key: "views" as keyof DashboardData, route: "/analytics/views" },
-    { label: "Accounts engaged", value: data.interactions, key: "interactions" as keyof DashboardData, route: "/analytics/interactions" },
-    { label: "Total followers", value: data.newFollowers, key: "newFollowers" as keyof DashboardData, route: "/analytics/followers" },
+  const toolItems = [
+    { label: "Monthly recap", icon: <History size={24} />, badge: "New" },
+    { label: "Best practices", icon: <GraduationCap size={24} /> },
+    { label: "Inspiration", icon: <Lightbulb size={24} /> },
+    { label: "Partnership ads", icon: <Share2 size={24} /> },
+    { label: "Ad tools", icon: <TrendingUp size={24} /> },
+    { label: "Trial reels", icon: <Presentation size={24} />, badge: "New" },
+    { label: "Your Als", icon: <Sparkles size={24} /> },
+    { label: "Branded content", icon: <Contact2 size={24} />, subtitle: "Partner with a brand or creator for your next post" },
   ];
 
   return (
-    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative">
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/profile')} className="text-foreground">
-            <ArrowLeft size={28} strokeWidth={2.5} />
+    <div className="pb-24 min-h-screen bg-white select-none overflow-x-hidden relative text-black">
+      {/* Header */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-transparent">
+        <div className="flex items-center gap-6">
+          <button onClick={() => navigate('/profile')} className="text-black">
+            <ArrowLeft size={30} strokeWidth={2} />
           </button>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">Professional Dashboard</h1>
+          <h1 className="text-[20px] font-bold tracking-tight">Professional dashboard</h1>
         </div>
         <div className="flex items-center gap-3">
           {isEditing && (
@@ -80,111 +78,126 @@ const AnalyticsScreen = () => {
               <Check size={20} strokeWidth={3} />
             </button>
           )}
+          <Settings size={28} strokeWidth={1.8} className="text-black" />
         </div>
       </header>
 
       <div 
-        className="pt-2"
+        className="pt-4"
         onTouchStart={startPress}
         onTouchEnd={endPress}
         onMouseDown={startPress}
         onMouseUp={endPress}
         onMouseLeave={endPress}
       >
-        {/* Insights Card */}
-        <div className="mx-4 mt-2 p-4 bg-secondary/30 rounded-[12px] border border-border/40">
-           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-[17px] font-bold">Insights</h3>
-             <button className="text-[14px] text-[#0095f6] font-bold" onClick={() => navigate('/analytics/views')}>See all</button>
-           </div>
-           
-           <div className="flex items-baseline gap-1 mb-1">
+        {/* Insights Section */}
+        <div className="px-4 mb-8">
+           <div className="flex justify-between items-center mb-6">
+             <h2 className="text-[17px] font-bold text-black">Insights</h2>
              {isEditing ? (
-               <input className="bg-secondary/50 rounded px-1 w-20 outline-none" value={data.views} onChange={e => updateField('views', e.target.value)} />
+                <input 
+                  className="text-[13px] text-gray-500 font-medium bg-gray-100 rounded px-2 py-0.5 outline-none text-right" 
+                  value={data.dateRangeLabel} 
+                  onChange={e => updateField('dateRangeLabel', e.target.value)} 
+                />
              ) : (
-               <span className="text-[18px] font-bold">{data.views}</span>
+                <span className="text-[13px] text-gray-400 font-medium">{data.dateRangeLabel}</span>
              )}
-             <span className="text-[13px] text-muted-foreground font-medium">accounts reached in the last 30 days</span>
            </div>
            
-           <div className="flex items-center gap-1.5 mb-6">
-             <span className="text-[13px] text-green-500 font-bold">
-               {isEditing ? (
-                 <input className="bg-secondary/50 rounded px-1 w-16 outline-none" value={data.accountsReachedChange} onChange={e => updateField('accountsReachedChange', e.target.value)} />
-               ) : data.accountsReachedChange}
-             </span>
-             <span className="text-[12px] text-muted-foreground font-medium">compared to Jan 13 - Feb 11</span>
-           </div>
-
-           <div className="space-y-4">
-             {insightRows.map(row => (
-               <div key={row.key} onClick={() => !isEditing && navigate(row.route)} className="flex items-center justify-between cursor-pointer">
-                 <span className="text-[15px] font-medium text-foreground">{row.label}</span>
+           <div className="space-y-7">
+              <div onClick={() => !isEditing && navigate('/analytics/views')} className="flex justify-between items-center cursor-pointer">
+                 <span className="text-[15px] font-medium">Views</span>
                  <div className="flex items-center gap-2">
-                   {isEditing ? (
-                     <input className="bg-secondary/50 rounded px-1 w-20 text-right outline-none" value={data[row.key]} onChange={e => updateField(row.key, e.target.value)} />
-                   ) : (
-                     <span className="text-[15px] font-bold">{row.value}</span>
-                   )}
-                   <ChevronRight size={18} className="text-muted-foreground/60" />
+                    {isEditing ? (
+                      <input className="bg-gray-100 rounded px-2 py-0.5 w-20 text-right font-bold outline-none" value={data.views} onChange={e => updateField('views', e.target.value)} />
+                    ) : (
+                      <span className="text-[15px] font-bold">{data.views}</span>
+                    )}
+                    <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
                  </div>
-               </div>
-             ))}
+              </div>
+
+              <div onClick={() => !isEditing && navigate('/analytics/interactions')} className="flex justify-between items-center cursor-pointer">
+                 <span className="text-[15px] font-medium">Interactions</span>
+                 <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <input className="bg-gray-100 rounded px-2 py-0.5 w-20 text-right font-bold outline-none" value={data.interactions} onChange={e => updateField('interactions', e.target.value)} />
+                    ) : (
+                      <span className="text-[15px] font-bold">{data.interactions}</span>
+                    )}
+                    <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
+                 </div>
+              </div>
+
+              <div onClick={() => !isEditing && navigate('/analytics/followers')} className="flex justify-between items-center cursor-pointer">
+                 <span className="text-[15px] font-medium">New followers</span>
+                 <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <input className="bg-gray-100 rounded px-2 py-0.5 w-20 text-right font-bold outline-none" value={data.newFollowers} onChange={e => updateField('newFollowers', e.target.value)} />
+                    ) : (
+                      <span className="text-[15px] font-bold">{data.newFollowers}</span>
+                    )}
+                    <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                 <span className="text-[15px] font-medium">Content you shared</span>
+                 <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <input className="bg-gray-100 rounded px-2 py-0.5 w-20 text-right font-bold outline-none" value={data.contentShared} onChange={e => updateField('contentShared', e.target.value)} />
+                    ) : (
+                      <span className="text-[15px] font-bold">{data.contentShared}</span>
+                    )}
+                    <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
+                 </div>
+              </div>
            </div>
         </div>
 
-        {/* Next Step Card */}
-        <div className="mx-4 mt-6 p-4 bg-secondary/30 rounded-[12px] border border-border/40 flex gap-4">
-           <div className="flex-1">
-             <h3 className="text-[16px] font-bold mb-1">
-               {isEditing ? (
-                 <input className="bg-secondary/50 rounded px-1 w-full outline-none" value={data.nextStepTitle} onChange={e => updateField('nextStepTitle', e.target.value)} />
-               ) : data.nextStepTitle}
-             </h3>
-             <p className="text-[14px] text-muted-foreground leading-snug">
-               {isEditing ? (
-                 <textarea className="bg-secondary/50 rounded px-1 w-full outline-none text-[13px]" rows={2} value={data.nextStepSubtitle} onChange={e => updateField('nextStepSubtitle', e.target.value)} />
-               ) : data.nextStepSubtitle}
-             </p>
-           </div>
-           <div className="w-[60px] h-[60px] rounded-[10px] bg-secondary overflow-hidden flex-shrink-0">
-             <img src={data.nextStepImage} alt="" className="w-full h-full object-cover" />
-           </div>
-        </div>
+        <div className="h-[0.5px] bg-gray-100 w-full" />
 
-        {/* Tools Section */}
-        <div className="mt-8 px-4">
-           <h3 className="text-[17px] font-bold mb-4 px-1">Your tools</h3>
+        {/* Your tools Section */}
+        <div className="px-4 py-6">
+           <div className="flex justify-between items-center mb-6">
+              <h2 className="text-[17px] font-bold text-black">Your tools</h2>
+              <button className="text-[14px] text-[#0095f6] font-bold">See all</button>
+           </div>
+
            <div className="space-y-6">
-              <div className="flex items-center gap-4">
-                 <div className="w-11 h-11 rounded-full bg-secondary/40 flex items-center justify-center text-foreground">
-                    <Megaphone size={22} strokeWidth={1.5} />
-                 </div>
-                 <div className="flex-1 border-b border-border/40 pb-4">
-                    <p className="font-bold text-[15px]">Ad tools</p>
-                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                 <div className="w-11 h-11 rounded-full bg-secondary/40 flex items-center justify-center text-foreground">
-                    <Handshake size={22} strokeWidth={1.5} />
-                 </div>
-                 <div className="flex-1 border-b border-border/40 pb-4">
-                    <p className="font-bold text-[15px]">Branded content</p>
-                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                 <div className="w-11 h-11 rounded-full bg-secondary/40 flex items-center justify-center text-foreground">
-                    <Users size={22} strokeWidth={1.5} />
-                 </div>
-                 <div className="flex-1">
-                    <div className="flex items-center justify-between font-bold text-[15px]">
-                       <span>Partnerships</span>
-                       <span className="bg-[#0095f6] text-white text-[10px] px-1.5 py-0.5 rounded-sm">New</span>
-                    </div>
-                    <p className="text-[13px] text-muted-foreground">Check your eligibility for monetization</p>
-                 </div>
-              </div>
+              {toolItems.map((tool, i) => (
+                <div key={i} className="flex items-center gap-4 group">
+                   <div className="text-black">
+                      {tool.icon}
+                   </div>
+                   <div className="flex-1 flex items-center justify-between">
+                      <div className="flex flex-col">
+                         <div className="flex items-center gap-2">
+                           <span className="text-[16px] font-medium">{tool.label}</span>
+                           {tool.badge && (
+                              <span className="bg-[#4169E1] text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                {tool.badge}
+                              </span>
+                           )}
+                         </div>
+                         {tool.subtitle && (
+                            <span className="text-[13px] text-gray-500 leading-tight mt-0.5">
+                              {tool.subtitle}
+                            </span>
+                         )}
+                      </div>
+                      <ChevronRight size={20} className="text-gray-300" strokeWidth={2.5} />
+                   </div>
+                </div>
+              ))}
            </div>
+        </div>
+
+        <div className="h-[0.5px] bg-gray-100 w-full" />
+
+        <div className="px-4 py-8">
+           <h2 className="text-[17px] font-bold text-black">Tips and resources</h2>
         </div>
       </div>
 
@@ -206,6 +219,9 @@ const AnalyticsScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Shadow at bottom to match screenshot hint */}
+      <div className="fixed bottom-0 left-0 right-0 h-2 bg-gradient-to-t from-gray-100/30 to-transparent pointer-events-none" />
     </div>
   );
 };
