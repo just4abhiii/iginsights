@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, ChevronDown, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, ChevronDown, Check, AlertCircle, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -351,7 +351,13 @@ const FollowersDetailScreen = () => {
                 <div key={i}>
                    <div className="flex justify-between items-center mb-3">
                       <span className="text-[15px] font-medium">{g.name}</span>
-                      <span className="text-[15px] font-bold">{g.pct}%</span>
+                      {isEditing ? (
+                         <input className="w-16 bg-gray-100 rounded text-right text-[15px] font-bold outline-none" type="number" value={g.pct} onChange={e => {
+                           const n = [...data.gender]; n[i].pct = parseFloat(e.target.value) || 0; updateField('gender', n);
+                         }} />
+                      ) : (
+                         <span className="text-[15px] font-bold">{g.pct}%</span>
+                      )}
                    </div>
                    <div className="h-3 w-full bg-[#F2F2F7] rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${g.pct}%`, backgroundColor: g.color }} />
@@ -379,8 +385,19 @@ const FollowersDetailScreen = () => {
 
            <div className="flex items-end justify-between h-[160px] px-2 mb-10">
               {data.activeTimes.map((t, i) => (
-                 <div key={i} className="flex flex-col items-center flex-1 h-full justify-end">
-                    <div className="w-[85%] bg-[#D32FE0] rounded-[4px]" style={{ height: `${t.height}%` }} />
+                 <div key={i} className="flex flex-col items-center flex-1 h-full justify-end group relative cursor-pointer">
+                    <div className="w-[85%] bg-[#D32FE0] rounded-[4px] relative" style={{ height: `${t.height}%` }}>
+                       {isEditing && (
+                          <input 
+                             type="number"
+                             className="absolute -top-10 left-1/2 -translate-x-1/2 w-10 bg-black text-white text-[10px] rounded px-1 text-center font-bold outline-none"
+                             value={t.height}
+                             onChange={e => {
+                                const n = [...data.activeTimes]; n[i].height = Math.min(100, Math.max(0, parseInt(e.target.value) || 0)); updateField('activeTimes', n);
+                             }}
+                          />
+                       )}
+                    </div>
                     <span className="text-[12px] text-gray-400 font-bold mt-4">{t.time}</span>
                  </div>
               ))}

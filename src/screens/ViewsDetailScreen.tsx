@@ -107,6 +107,25 @@ const ViewsDetailScreen = () => {
     setData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageUpload = (index: number) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+          const content = [...data.topContent];
+          content[index] = { ...content[index], image: readerEvent.target?.result as string };
+          updateField('topContent', content);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
   const formatCount = (n: number) => n.toLocaleString();
 
   return (
@@ -247,12 +266,36 @@ const ViewsDetailScreen = () => {
                 <div key={type.name}>
                   <div className="flex justify-between items-center mb-2.5">
                     <span className="text-[15px] font-medium text-foreground">{type.name}</span>
-                    <span className="text-[14px] font-bold text-foreground">{type.total}%</span>
+                    <div className="flex items-center gap-1">
+                      {isEditing ? (
+                        <input className="w-12 bg-secondary/50 rounded text-right text-[14px] font-bold outline-none" value={type.total} onChange={e => {
+                          const n = [...data.contentTypes]; n[i].total = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                        }} />
+                      ) : (
+                        <span className="text-[14px] font-bold text-foreground">{type.total}%</span>
+                      )}
+                    </div>
                   </div>
                   <div className="h-[14px] w-full bg-secondary/30 rounded-full flex overflow-hidden">
                     <div className="bg-[#D32FE0]" style={{ width: `${type.followerPct}%` }} />
                     <div className="bg-[#5B21B6]" style={{ width: `${type.nonFollowerPct}%` }} />
                   </div>
+                  {isEditing && (
+                    <div className="mt-2 grid grid-cols-2 gap-4">
+                       <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-[#D32FE0]" />
+                          <input className="w-12 bg-secondary/30 rounded text-[11px] font-bold outline-none" value={type.followerPct} onChange={e => {
+                            const n = [...data.contentTypes]; n[i].followerPct = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                          }} />
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-[#5B21B6]" />
+                          <input className="w-12 bg-secondary/30 rounded text-[11px] font-bold outline-none" value={type.nonFollowerPct} onChange={e => {
+                            const n = [...data.contentTypes]; n[i].nonFollowerPct = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                          }} />
+                       </div>
+                    </div>
+                  )}
                 </div>
               ))}
            </div>
@@ -271,7 +314,10 @@ const ViewsDetailScreen = () => {
           <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
             {data.topContent.map((item, i) => (
               <div key={i} className="flex-shrink-0 w-[124px]">
-                <div className="relative rounded-[12px] overflow-hidden aspect-[1/1.5] shadow-sm">
+                <div 
+                  onClick={() => isEditing && handleImageUpload(i)}
+                  className={cn("relative rounded-[12px] overflow-hidden aspect-[1/1.5] shadow-sm", isEditing && "cursor-pointer ring-2 ring-[#0095f6] ring-offset-2")}
+                >
                   <img src={item.image} alt="" className="w-full h-full object-cover" />
                   <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="white" className="drop-shadow-md">
@@ -280,10 +326,13 @@ const ViewsDetailScreen = () => {
                     <span className="text-white text-[12px] font-bold drop-shadow-md">{item.views}</span>
                   </div>
                   {isEditing && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                       <input className="w-20 bg-white/20 text-white rounded text-center text-[10px] font-bold outline-none" value={item.views} onChange={e => {
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2">
+                       <input className="w-20 bg-white text-black rounded text-center text-[10px] font-bold outline-none py-1" value={item.views} onClick={e => e.stopPropagation()} onChange={e => {
                          const n = [...data.topContent]; n[i].views = e.target.value; updateField('topContent', n);
                        }} />
+                       <div className="bg-white/80 p-1.5 rounded-full">
+                          <Plus size={16} className="text-black" />
+                       </div>
                     </div>
                   )}
                 </div>

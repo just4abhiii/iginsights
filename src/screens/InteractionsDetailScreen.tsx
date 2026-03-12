@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, Info, ChevronDown, Check, Film } from "lucide-react";
+import { ArrowLeft, Info, ChevronDown, Check, Film, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -72,6 +72,25 @@ const InteractionsDetailScreen = () => {
 
   const updateField = (field: keyof InteractionsData, value: any) => {
     setData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = (index: number) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (readerEvent) => {
+          const content = [...data.topReels];
+          content[index] = { ...content[index], image: readerEvent.target?.result as string };
+          updateField('topReels', content);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
   };
 
   return (
@@ -196,12 +215,36 @@ const InteractionsDetailScreen = () => {
                 <div key={type.name}>
                    <div className="flex justify-between items-center mb-3">
                       <span className="text-[15px] font-medium">{type.name}</span>
-                      <span className="text-[15px] font-bold">{type.total}%</span>
+                      <div className="flex items-center gap-1">
+                         {isEditing ? (
+                            <input className="w-12 bg-gray-100 rounded text-right text-[15px] font-bold outline-none" value={type.total} onChange={e => {
+                              const n = [...data.contentTypes]; n[i].total = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                            }} />
+                         ) : (
+                            <span className="text-[15px] font-bold">{type.total}%</span>
+                         )}
+                      </div>
                    </div>
                    <div className="h-3 w-full bg-[#F2F2F2] rounded-full flex overflow-hidden">
                       <div className="bg-[#B025C3]" style={{ width: `${type.followerPct}%` }} />
                       <div className="bg-[#4B12C2]" style={{ width: `${type.nonFollowerPct}%` }} />
                    </div>
+                   {isEditing && (
+                     <div className="mt-2 grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                           <div className="h-2 w-2 rounded-full bg-[#B025C3]" />
+                           <input className="w-12 bg-gray-100 rounded text-[11px] font-bold outline-none" value={type.followerPct} onChange={e => {
+                             const n = [...data.contentTypes]; n[i].followerPct = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                           }} />
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <div className="h-2 w-2 rounded-full bg-[#4B12C2]" />
+                           <input className="w-12 bg-gray-100 rounded text-[11px] font-bold outline-none" value={type.nonFollowerPct} onChange={e => {
+                             const n = [...data.contentTypes]; n[i].nonFollowerPct = parseFloat(e.target.value) || 0; updateField('contentTypes', n);
+                           }} />
+                        </div>
+                     </div>
+                   )}
                 </div>
               ))}
            </div>
@@ -249,7 +292,10 @@ const InteractionsDetailScreen = () => {
            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-4">
               {data.topReels.map((reel, i) => (
                 <div key={i} className="flex-shrink-0 w-[124px]">
-                   <div className="relative rounded-[16px] overflow-hidden aspect-[3/4.2] mb-2 shadow-sm">
+                   <div 
+                     onClick={() => isEditing && handleImageUpload(i)}
+                     className={cn("relative rounded-[16px] overflow-hidden aspect-[3/4.2] mb-2 shadow-sm", isEditing && "cursor-pointer ring-2 ring-[#0095f6] ring-offset-2")}
+                   >
                       <img src={reel.image} alt="" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/30" />
                       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/95 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-sm">
@@ -257,10 +303,13 @@ const InteractionsDetailScreen = () => {
                          <span className="text-[12px] font-bold">{reel.count}</span>
                       </div>
                       {isEditing && (
-                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-2">
-                            <input className="w-full bg-white/20 text-white rounded text-center text-[10px] font-bold outline-none" value={reel.count} onChange={e => {
+                         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-2 gap-2">
+                            <input className="w-full bg-white text-black rounded text-center text-[10px] font-bold outline-none py-1" onClick={e => e.stopPropagation()} value={reel.count} onChange={e => {
                               const nt = [...data.topReels]; nt[i].count = e.target.value; updateField('topReels', nt);
                             }} />
+                            <div className="bg-white/80 p-1.5 rounded-full">
+                               <Plus size={16} className="text-black" />
+                            </div>
                          </div>
                       )}
                    </div>
