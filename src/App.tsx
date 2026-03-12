@@ -111,11 +111,11 @@ const App = () => {
                         <Route path="/reels" element={<ReelsScreen />} />
                         <Route path="/profile" element={<ProfileScreen />} />
                         <Route path="/analytics" element={<AnalyticsScreen />} />
+                        <Route path="/analytics/views" element={<ViewsDetailScreen />} />
+                        <Route path="/analytics/interactions" element={<InteractionsDetailScreen />} />
+                        <Route path="/analytics/followers" element={<FollowersDetailScreen />} />
                         <Route path="/reel-insights/:id" element={<ReelInsightsScreen />} />
                         <Route path="/reel/:id" element={<ReelDetailScreen />} />
-                        <Route path="/insights/views" element={<ViewsDetailScreen />} />
-                        <Route path="/insights/interactions" element={<InteractionsDetailScreen />} />
-                        <Route path="/insights/followers" element={<FollowersDetailScreen />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </AppLayout>
