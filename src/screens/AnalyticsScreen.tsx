@@ -63,11 +63,11 @@ const AnalyticsScreen = () => {
   ];
 
   return (
-    <div className="pb-24 min-h-screen bg-white select-none overflow-x-hidden relative text-black">
+    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-transparent">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate('/profile')} className="text-black">
+          <button onClick={() => navigate('/profile')} className="text-foreground">
             <ArrowLeft size={30} strokeWidth={2} />
           </button>
           <h1 className="text-[20px] font-bold tracking-tight">Professional dashboard</h1>
@@ -78,7 +78,7 @@ const AnalyticsScreen = () => {
               <Check size={20} strokeWidth={3} />
             </button>
           )}
-          <Settings size={28} strokeWidth={1.8} className="text-black" />
+          <Settings size={28} strokeWidth={1.8} className="text-foreground" />
         </div>
       </header>
 
@@ -93,7 +93,7 @@ const AnalyticsScreen = () => {
         {/* Insights Section */}
         <div className="px-4 mb-8">
            <div className="flex justify-between items-center mb-6">
-             <h2 className="text-[17px] font-bold text-black">Insights</h2>
+             <h2 className="text-[17px] font-bold text-foreground">Insights</h2>
              {isEditing ? (
                 <input 
                   className="text-[13px] text-gray-500 font-medium bg-gray-100 rounded px-2 py-0.5 outline-none text-right" 

@@ -18,6 +18,8 @@ interface FollowersData {
   gender: { name: string; pct: number; color: string }[];
   activeDays: string[];
   activeTimes: { time: string; height: number }[];
+  chartData: number[]; // 5-7 points to control the line chart
+  chartAxis: { max: string; mid: string; min: string };
 }
 
 const defaultData: FollowersData = {
@@ -60,6 +62,8 @@ const defaultData: FollowersData = {
     { time: "6p", height: 100 },
     { time: "9p", height: 55 },
   ],
+  chartData: [130, 110, 100, 105, 140, 85, 110, 95, 110, 110, 105, 85, 115, 100, 130],
+  chartAxis: { max: "26", mid: "0", min: "-26" },
 };
 
 const FollowersDetailScreen = () => {
@@ -97,11 +101,11 @@ const FollowersDetailScreen = () => {
   };
 
   return (
-    <div className="pb-24 min-h-screen bg-white select-none overflow-x-hidden relative text-black">
+    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-transparent">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate('/analytics')} className="text-black">
+          <button onClick={() => navigate('/analytics')} className="text-foreground">
             <ArrowLeft size={30} strokeWidth={2} />
           </button>
           <h1 className="text-[20px] font-bold">Followers</h1>
@@ -112,7 +116,7 @@ const FollowersDetailScreen = () => {
               <Check size={20} strokeWidth={3} />
             </button>
           )}
-          <div className="border-[2px] border-black rounded-full w-7 h-7 flex items-center justify-center">
+          <div className="border-[2px] border-foreground rounded-full w-7 h-7 flex items-center justify-center">
             <span className="text-[15px] font-bold">i</span>
           </div>
         </div>
@@ -219,24 +223,53 @@ const FollowersDetailScreen = () => {
 
            {/* Line Chart UI */}
            <div className="relative h-[180px] w-full mt-2 mb-4">
-              <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[13px] text-gray-300 font-bold -translate-y-2">
-                 <span>26</span>
-                 <span>0</span>
-                 <span>-26</span>
+              <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-[13px] text-muted-foreground font-bold -translate-y-2">
+                 {isEditing ? (
+                    <>
+                       <input className="w-8 bg-secondary/30 rounded text-center outline-none" value={data.chartAxis.max} onChange={e => updateField('chartAxis', {...data.chartAxis, max: e.target.value})} />
+                       <input className="w-8 bg-secondary/30 rounded text-center outline-none" value={data.chartAxis.mid} onChange={e => updateField('chartAxis', {...data.chartAxis, mid: e.target.value})} />
+                       <input className="w-8 bg-secondary/30 rounded text-center outline-none" value={data.chartAxis.min} onChange={e => updateField('chartAxis', {...data.chartAxis, min: e.target.value})} />
+                    </>
+                 ) : (
+                    <>
+                       <span>{data.chartAxis.max}</span>
+                       <span>{data.chartAxis.mid}</span>
+                       <span>{data.chartAxis.min}</span>
+                    </>
+                 )}
               </div>
-              <div className="absolute left-6 right-0 top-0 bottom-0">
+              <div className="absolute left-10 right-0 top-0 bottom-0">
                  {/* Grid lines */}
-                 <div className="absolute top-0 w-full h-[1px] bg-gray-50" />
-                 <div className="absolute top-1/2 w-full h-[1px] bg-gray-50" />
-                 <div className="absolute bottom-0 w-full h-[1px] bg-gray-50" />
+                 <div className="absolute top-0 w-full h-[0.5px] bg-border/50" />
+                 <div className="absolute top-1/2 w-full h-[0.5px] bg-border/50" />
+                 <div className="absolute bottom-0 w-full h-[0.5px] bg-border/50" />
                  
                  {/* Line Path */}
-                 <svg viewBox="0 0 400 150" className="w-full h-full preserve-3d overflow-visible">
-                    <path d="M0,130 L30,110 L60,100 L90,105 L120,140 L150,85 L180,110 L210,95 L240,110 L270,110 L300,105 L330,85 L360,115 L390,100 L420,130 L450,90 L480,105 L510,95 L540,105" 
-                      fill="none" stroke="#D32FE0" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                 <svg viewBox="0 0 540 150" className="w-full h-full preserve-3d overflow-visible">
+                    <path 
+                      d={`M0,${data.chartData[0]} ${data.chartData.slice(1).map((y, i) => `L${(i+1)*40},${y}`).join(' ')}`} 
+                      fill="none" stroke="#D32FE0" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" 
+                    />
                  </svg>
+
+                 {isEditing && (
+                    <div className="absolute inset-0 flex justify-between items-center pointer-events-none">
+                       {data.chartData.map((y, i) => (
+                          <div key={i} className="relative flex flex-col items-center pointer-events-auto h-full justify-end">
+                             <input 
+                                type="range" min="0" max="150" 
+                                className="h-full appearance-none bg-transparent opacity-0 cursor-pointer w-4 hover:opacity-10" 
+                                value={y} 
+                                onChange={e => {
+                                   const n = [...data.chartData]; n[i] = parseInt(e.target.value); updateField('chartData', n);
+                                }} 
+                             />
+                          </div>
+                       ))}
+                    </div>
+                 )}
               </div>
-              <div className="absolute left-6 right-0 bottom-[-28px] flex justify-between text-[13px] text-gray-400 font-bold">
+              <div className="absolute left-10 right-0 bottom-[-28px] flex justify-between text-[13px] text-muted-foreground font-bold">
                  <span>11 Feb</span>
                  <span>24 Feb</span>
                  <span>10 Mar</span>

@@ -94,10 +94,10 @@ const InteractionsDetailScreen = () => {
   };
 
   return (
-    <div className="pb-24 min-h-screen bg-white select-none overflow-x-hidden relative text-black">
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-transparent">
+    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative text-foreground">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate('/analytics')} className="text-black">
+          <button onClick={() => navigate('/analytics')} className="text-foreground">
             <ArrowLeft size={30} strokeWidth={2} />
           </button>
           <h1 className="text-[20px] font-bold">Interactions</h1>
@@ -108,7 +108,7 @@ const InteractionsDetailScreen = () => {
                <Check size={20} strokeWidth={3} />
              </button>
           )}
-          <div className="border-[2px] border-black rounded-full w-7 h-7 flex items-center justify-center">
+          <div className="border-[2px] border-foreground rounded-full w-7 h-7 flex items-center justify-center">
             <span className="text-[15px] font-bold">i</span>
           </div>
         </div>

@@ -129,7 +129,7 @@ const ViewsDetailScreen = () => {
   const formatCount = (n: number) => n.toLocaleString();
 
   return (
-    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative">
+    <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative text-foreground">
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/analytics')} className="text-foreground">
@@ -352,7 +352,7 @@ const ViewsDetailScreen = () => {
 
           <div className="flex gap-4 overflow-x-auto hide-scrollbar px-4 pb-4">
             {/* Towns/Cities */}
-            <div className="flex-shrink-0 w-[300px] bg-white text-black rounded-[12px] border border-gray-100 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
                 <h4 className="text-[17px] font-bold mb-6">Top towns/cities</h4>
                 <div className="space-y-6">
                     {data.cities.map((city, i) => (
@@ -380,7 +380,7 @@ const ViewsDetailScreen = () => {
             </div>
 
             {/* Countries */}
-            <div className="flex-shrink-0 w-[300px] bg-white text-black rounded-[12px] border border-gray-100 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
                 <h4 className="text-[17px] font-bold mb-6">Top countries</h4>
                 <div className="space-y-6">
                     {data.countries.map((country, i) => (
@@ -408,7 +408,7 @@ const ViewsDetailScreen = () => {
             </div>
 
             {/* Age Ranges */}
-            <div className="flex-shrink-0 w-[300px] bg-white text-black rounded-[12px] border border-gray-100 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
                 <h4 className="text-[17px] font-bold mb-6">Top age ranges</h4>
                 <div className="space-y-6">
                     {data.ageRanges.map((range, i) => (
@@ -436,7 +436,7 @@ const ViewsDetailScreen = () => {
             </div>
 
             {/* Gender */}
-            <div className="flex-shrink-0 w-[300px] bg-white text-black rounded-[12px] border border-gray-100 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
                 <h4 className="text-[17px] font-bold mb-6">Gender</h4>
                 <div className="space-y-6 mt-12">
                     {data.gender.map((g, i) => (
