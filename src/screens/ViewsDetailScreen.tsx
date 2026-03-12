@@ -18,6 +18,7 @@ interface ViewsData {
   countries: { name: string; pct: number }[];
   cities: { name: string; pct: number }[];
   ageRanges: { range: string; pct: number }[];
+  gender: { name: string; pct: number; color: string }[];
   profileActivityTotal: number;
   profileActivityChange: string;
   profileVisits: number;
@@ -62,6 +63,10 @@ const defaultData: ViewsData = {
     { range: "13-17", pct: 29.0 },
     { range: "25-34", pct: 22.1 },
     { range: "35-44", pct: 7.9 },
+  ],
+  gender: [
+    { name: "Men", pct: 75.4, color: "#D32FE0" },
+    { name: "Women", pct: 24.6, color: "#5B21B6" },
   ],
   profileActivityTotal: 218,
   profileActivityChange: "-47.8%",
@@ -290,46 +295,124 @@ const ViewsDetailScreen = () => {
         <div className="h-[6px] bg-secondary/30" />
 
         {/* Audience */}
-        <div className="px-4 py-7">
-          <h3 className="text-[18px] font-bold text-foreground mb-5">Audience</h3>
-          <div className="flex gap-2.5 mb-7">
-            {["Countries", "Cities", "Age ranges"].map(t => (
-               <button key={t} onClick={() => setAudienceTab(t)}
-                 className={cn("rounded-full px-5 py-1.5 text-[13px] font-bold border",
-                   audienceTab === t ? "bg-secondary/60 text-foreground border-transparent" : "bg-transparent text-foreground border-border/80"
-                 )}>
-                 {t}
-               </button>
-            ))}
+        <div className="py-7">
+          <div className="px-4 flex items-center gap-2 mb-4">
+            <h3 className="text-[18px] font-bold text-foreground">Audience</h3>
+            <Info size={18} strokeWidth={2.5} className="text-foreground" />
           </div>
 
-          <div className="space-y-6">
-            {(audienceTab === "Countries" ? data.countries : audienceTab === "Cities" ? data.cities : data.ageRanges).map((item: any, i) => (
-              <div key={item.name || item.range}>
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[14px] font-medium text-foreground">{item.name || item.range}</span>
-                  <span className="text-[13px] font-bold text-foreground">{item.pct}%</span>
+          <div className="flex gap-4 overflow-x-auto hide-scrollbar px-4 pb-4">
+            {/* Towns/Cities */}
+            <div className="flex-shrink-0 w-[300px] bg-white rounded-[12px] border border-gray-100 p-6 shadow-sm">
+                <h4 className="text-[17px] font-bold mb-6">Top towns/cities</h4>
+                <div className="space-y-6">
+                    {data.cities.map((city, i) => (
+                        <div key={city.name}>
+                            <p className="text-[14px] font-medium mb-1.5">{city.name}</p>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${city.pct}%` }} />
+                                </div>
+                                <span className="text-[13px] font-bold w-10 text-right">{city.pct}%</span>
+                            </div>
+                            {isEditing && (
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" value={city.name} onChange={e => {
+                                        const n = [...data.cities]; n[i].name = e.target.value; updateField('cities', n);
+                                    }} />
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" type="number" value={city.pct} onChange={e => {
+                                        const n = [...data.cities]; n[i].pct = parseFloat(e.target.value) || 0; updateField('cities', n);
+                                    }} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-                <div className="h-[10px] w-full bg-secondary/30 rounded-full relative overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 bg-[#D32FE0] rounded-full" style={{ width: `${item.pct}%` }} />
+            </div>
+
+            {/* Countries */}
+            <div className="flex-shrink-0 w-[300px] bg-white rounded-[12px] border border-gray-100 p-6 shadow-sm">
+                <h4 className="text-[17px] font-bold mb-6">Top countries</h4>
+                <div className="space-y-6">
+                    {data.countries.map((country, i) => (
+                        <div key={country.name}>
+                            <p className="text-[14px] font-medium mb-1.5">{country.name}</p>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${country.pct}%` }} />
+                                </div>
+                                <span className="text-[13px] font-bold w-10 text-right">{country.pct}%</span>
+                            </div>
+                            {isEditing && (
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" value={country.name} onChange={e => {
+                                        const n = [...data.countries]; n[i].name = e.target.value; updateField('countries', n);
+                                    }} />
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" type="number" value={country.pct} onChange={e => {
+                                        const n = [...data.countries]; n[i].pct = parseFloat(e.target.value) || 0; updateField('countries', n);
+                                    }} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-                {isEditing && (
-                   <div className="mt-2 grid grid-cols-2 gap-2">
-                      <input className="bg-secondary/30 rounded px-2 py-0.5 text-[11px] font-bold" value={item.name || item.range} onChange={e => {
-                         const field = audienceTab === "Countries" ? 'countries' : audienceTab === "Cities" ? 'cities' : 'ageRanges';
-                         const n = [...(data as any)[field]]; 
-                         if(item.name) n[i].name = e.target.value; else n[i].range = e.target.value;
-                         updateField(field as any, n);
-                      }} />
-                      <input className="bg-secondary/30 rounded px-2 py-0.5 text-[11px] font-bold" type="number" value={item.pct} onChange={e => {
-                         const field = audienceTab === "Countries" ? 'countries' : audienceTab === "Cities" ? 'cities' : 'ageRanges';
-                         const n = [...(data as any)[field]]; n[i].pct = parseFloat(e.target.value) || 0;
-                         updateField(field as any, n);
-                      }} />
-                   </div>
-                )}
-              </div>
-            ))}
+            </div>
+
+            {/* Age Ranges */}
+            <div className="flex-shrink-0 w-[300px] bg-white rounded-[12px] border border-gray-100 p-6 shadow-sm">
+                <h4 className="text-[17px] font-bold mb-6">Top age ranges</h4>
+                <div className="space-y-6">
+                    {data.ageRanges.map((range, i) => (
+                        <div key={range.range}>
+                            <p className="text-[14px] font-medium mb-1.5">{range.range}</p>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[#D32FE0] rounded-full" style={{ width: `${range.pct}%` }} />
+                                </div>
+                                <span className="text-[13px] font-bold w-10 text-right">{range.pct}%</span>
+                            </div>
+                            {isEditing && (
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" value={range.range} onChange={e => {
+                                        const n = [...data.ageRanges]; n[i].range = e.target.value; updateField('ageRanges', n);
+                                    }} />
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" type="number" value={range.pct} onChange={e => {
+                                        const n = [...data.ageRanges]; n[i].pct = parseFloat(e.target.value) || 0; updateField('ageRanges', n);
+                                    }} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Gender */}
+            <div className="flex-shrink-0 w-[300px] bg-white rounded-[12px] border border-gray-100 p-6 shadow-sm">
+                <h4 className="text-[17px] font-bold mb-6">Gender</h4>
+                <div className="space-y-6 mt-12">
+                    {data.gender.map((g, i) => (
+                        <div key={g.name}>
+                            <p className="text-[14px] font-medium mb-1.5">{g.name}</p>
+                            <div className="flex items-center gap-4">
+                                <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${g.pct}%`, backgroundColor: g.color }} />
+                                </div>
+                                <span className="text-[13px] font-bold w-10 text-right">{g.pct}%</span>
+                            </div>
+                            {isEditing && (
+                                <div className="mt-2 grid grid-cols-2 gap-2">
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" value={g.name} onChange={e => {
+                                        const n = [...data.gender]; n[i].name = e.target.value; updateField('gender', n);
+                                    }} />
+                                    <input className="bg-gray-50 rounded px-2 py-1 text-[11px] font-bold outline-none" type="number" value={g.pct} onChange={e => {
+                                        const n = [...data.gender]; n[i].pct = parseFloat(e.target.value) || 0; updateField('gender', n);
+                                    }} />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
           </div>
         </div>
 
