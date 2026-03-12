@@ -494,29 +494,59 @@ const ViewsDetailScreen = () => {
 
         {/* Profile activity */}
         <div className="px-4 py-7">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-0.5">
             <div className="flex items-center gap-2">
               <h3 className="text-[18px] font-bold text-foreground">Profile activity</h3>
               <Info size={18} strokeWidth={2.5} className="text-foreground" />
             </div>
-            {isEditing ? (
-               <input className="w-16 bg-secondary/50 rounded text-right font-bold outline-none" value={data.profileActivityTotal} onChange={e => updateField('profileActivityTotal', parseInt(e.target.value) || 0)} />
-            ) : (
-               <span className="text-[18px] font-bold text-foreground">{data.profileActivityTotal}</span>
-            )}
+            <div className="text-right">
+              {isEditing ? (
+                 <input className="w-16 bg-secondary/50 rounded text-right font-bold outline-none" value={data.profileActivityTotal} onChange={e => updateField('profileActivityTotal', parseInt(e.target.value) || 0)} />
+              ) : (
+                 <span className="text-[18px] font-bold text-foreground">{data.profileActivityTotal}</span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between mb-6">
+             {isEditing ? (
+                <input className="text-[12px] text-muted-foreground font-medium bg-secondary/30 rounded outline-none w-32" value="vs 11 Jan-9 Feb" readOnly />
+             ) : (
+                <span className="text-[12px] text-muted-foreground font-medium">vs 11 Jan-9 Feb</span>
+             )}
+             {isEditing ? (
+                <input className="w-16 bg-secondary/30 rounded text-right text-[12px] text-muted-foreground font-medium outline-none" value={data.profileActivityChange} onChange={e => updateField('profileActivityChange', e.target.value)} />
+             ) : (
+                <span className="text-[12px] text-muted-foreground font-medium">{data.profileActivityChange}</span>
+             )}
           </div>
           
           <div className="space-y-7 mt-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[15px] font-medium">Profile visits</p>
-                <p className="text-[12px] text-muted-foreground font-medium mt-0.5">{data.profileVisitsChange} vs {data.startDate} - {data.endDate}</p>
+              <p className="text-[15px] font-medium">Profile visits</p>
+              <div className="text-right">
+                {isEditing ? (
+                  <input className="w-16 bg-secondary/30 rounded text-right font-bold outline-none" value={data.profileVisits} onChange={e => updateField('profileVisits', parseInt(e.target.value) || 0)} />
+                ) : (
+                  <p className="text-[15px] text-foreground font-bold">{data.profileVisits}</p>
+                )}
+                {isEditing ? (
+                   <input className="w-16 bg-secondary/30 rounded text-right text-[12px] text-muted-foreground font-medium outline-none mt-1" value={data.profileVisitsChange} onChange={e => updateField('profileVisitsChange', e.target.value)} />
+                ) : (
+                   <p className="text-[12px] text-muted-foreground font-medium">{data.profileVisitsChange}</p>
+                )}
               </div>
-              {isEditing ? (
-                <input className="w-16 bg-secondary/30 rounded text-right font-bold outline-none" value={data.profileVisits} onChange={e => updateField('profileVisits', parseInt(e.target.value) || 0)} />
-              ) : (
-                <span className="text-[15px] text-foreground font-bold">{data.profileVisits}</span>
-              )}
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-[15px] font-medium">External link taps</p>
+              <div className="text-right">
+                {isEditing ? (
+                  <input className="w-16 bg-secondary/30 rounded text-right font-bold outline-none" value={data.linkTaps} onChange={e => updateField('linkTaps', parseInt(e.target.value) || 0)} />
+                ) : (
+                  <p className="text-[15px] text-foreground font-bold">{data.linkTaps}</p>
+                )}
+                <p className="text-[12px] text-muted-foreground font-medium">--</p>
+              </div>
             </div>
           </div>
         </div>
