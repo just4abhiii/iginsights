@@ -33,7 +33,6 @@ const FollowersDetailScreen = () => {
     return saved ? JSON.parse(saved) : defaultData;
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [detailTab, setDetailTab] = useState("Overall");
 
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,7 +59,7 @@ const FollowersDetailScreen = () => {
 
   return (
     <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative">
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/analytics')} className="text-foreground">
             <ArrowLeft size={28} strokeWidth={2.5} />
@@ -69,12 +68,12 @@ const FollowersDetailScreen = () => {
         </div>
         <div className="flex items-center gap-3">
           {isEditing && (
-            <button onClick={saveChanges} className="bg-[#0095f6] text-white p-1.5 rounded-full shadow-lg">
+            <button onClick={saveChanges} className="bg-[#0095f6] text-white p-1.5 rounded-full shadow-lg flex items-center justify-center">
               <Check size={20} strokeWidth={3} />
             </button>
           )}
           <button className="text-foreground">
-            <div className="border-[2px] border-foreground rounded-full p-0.5 flex items-center justify-center w-6 h-6">
+            <div className="border-[2.5px] border-foreground rounded-full p-0.5 flex items-center justify-center w-6 h-6">
               <span className="text-[14px] font-bold">i</span>
             </div>
           </button>
@@ -92,15 +91,15 @@ const FollowersDetailScreen = () => {
           <button className="flex items-center gap-1.5 bg-secondary/60 rounded-[10px] px-3 py-1.5 text-[14px] text-foreground font-semibold">
             Last 30 days <ChevronDown size={18} strokeWidth={2.5} />
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 font-bold text-[14px]">
             {isEditing ? (
                <>
-                 <input className="w-12 bg-secondary/50 rounded text-center text-[14px] font-bold outline-none" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
                  <span className="text-foreground">-</span>
-                 <input className="w-12 bg-secondary/50 rounded text-center text-[14px] font-bold outline-none" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
                </>
             ) : (
-               <span className="text-[14px] font-bold text-foreground">{data.startDate} - {data.endDate}</span>
+               <span className="text-foreground">{data.startDate} - {data.endDate}</span>
             )}
           </div>
         </div>
@@ -117,9 +116,9 @@ const FollowersDetailScreen = () => {
                className="text-[36px] font-bold text-foreground bg-secondary/50 rounded px-2 outline-none w-48 text-center"
              />
           ) : (
-             <span className="text-[36px] font-bold text-foreground tracking-tight">{data.totalFollowers.toLocaleString()}</span>
+             <span className="text-[38px] font-bold text-foreground tracking-tight">{data.totalFollowers.toLocaleString()}</span>
           )}
-          <span className="text-[15px] font-bold text-foreground mt-1">Followers</span>
+          <span className="text-[16px] font-bold text-foreground mt-1">Followers</span>
           
           <div className="flex items-center gap-1 mt-1 font-medium">
              {isEditing ? (
@@ -140,29 +139,29 @@ const FollowersDetailScreen = () => {
         {/* Growth */}
         <div className="px-4 py-7">
           <h3 className="text-[18px] font-bold text-foreground mb-6">Growth</h3>
-          <div className="space-y-6">
+          <div className="space-y-6 mt-2">
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-foreground font-medium">Overall</span>
+              <span className="text-[16px] text-foreground font-medium">Overall</span>
               {isEditing ? (
-                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none" value={data.overall} onChange={e => updateField('overall', parseInt(e.target.value) || 0)} />
+                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none px-1" value={data.overall} onChange={e => updateField('overall', parseInt(e.target.value) || 0)} />
               ) : (
-                <span className="text-[15px] text-foreground font-bold">{data.overall}</span>
+                <span className="text-[16px] text-foreground font-bold">{data.overall}</span>
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-foreground font-medium">Follows</span>
+              <span className="text-[16px] text-foreground font-medium">Follows</span>
               {isEditing ? (
-                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none" value={data.follows} onChange={e => updateField('follows', parseInt(e.target.value) || 0)} />
+                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none px-1" value={data.follows} onChange={e => updateField('follows', parseInt(e.target.value) || 0)} />
               ) : (
-                <span className="text-[15px] text-foreground font-bold">{data.follows}</span>
+                <span className="text-[16px] text-foreground font-bold">{data.follows}</span>
               )}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-foreground font-medium">Unfollows</span>
+              <span className="text-[16px] text-foreground font-medium">Unfollows</span>
               {isEditing ? (
-                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none" value={data.unfollows} onChange={e => updateField('unfollows', parseInt(e.target.value) || 0)} />
+                <input type="number" className="w-20 bg-secondary/30 rounded text-right font-bold outline-none px-1" value={data.unfollows} onChange={e => updateField('unfollows', parseInt(e.target.value) || 0)} />
               ) : (
-                <span className="text-[15px] text-foreground font-bold">{data.unfollows}</span>
+                <span className="text-[16px] text-foreground font-bold">{data.unfollows}</span>
               )}
             </div>
           </div>
@@ -179,7 +178,7 @@ const FollowersDetailScreen = () => {
           >
             <button 
               onClick={saveChanges}
-              className="bg-[#0095f6] text-white font-bold py-3 px-10 rounded-full shadow-2xl active:scale-[0.98] flex items-center gap-2"
+              className="bg-[#0095f6] text-white font-bold py-3.5 px-12 rounded-full shadow-2xl active:scale-[0.98] flex items-center gap-2"
             >
               <Check size={20} strokeWidth={3} />
               SAVE CHANGES

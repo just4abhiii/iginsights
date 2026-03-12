@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, Info, ChevronDown, Check, Plus } from "lucide-react";
+import { ArrowLeft, Info, ChevronDown, Check, Plus, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -77,7 +77,7 @@ const ViewsDetailScreen = () => {
     return saved ? JSON.parse(saved) : defaultData;
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [contentTab, setContentTab] = useState("All");
+  const [audienceTab, setAudienceTab] = useState("Countries");
 
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -102,6 +102,8 @@ const ViewsDetailScreen = () => {
     setData(prev => ({ ...prev, [field]: value }));
   };
 
+  const formatCount = (n: number) => n.toLocaleString();
+
   return (
     <div className="pb-24 min-h-screen bg-background select-none overflow-x-hidden relative">
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-transparent">
@@ -113,7 +115,7 @@ const ViewsDetailScreen = () => {
         </div>
         <div className="flex items-center gap-3">
           {isEditing && (
-            <button onClick={saveChanges} className="bg-[#0095f6] text-white p-1.5 rounded-full shadow-lg">
+            <button onClick={saveChanges} className="bg-[#0095f6] text-white p-1.5 rounded-full shadow-lg h-8 w-8 flex items-center justify-center">
               <Check size={20} strokeWidth={3} />
             </button>
           )}
@@ -135,17 +137,19 @@ const ViewsDetailScreen = () => {
         {/* Date line */}
         <div className="flex items-center justify-between px-4 py-3 mt-1">
           <button className="flex items-center gap-1.5 bg-secondary/60 rounded-[10px] px-3 py-1.5 text-[14px] text-foreground font-semibold">
-            {data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
+            {isEditing ? (
+               <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
+            ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
           </button>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 font-bold text-[14px]">
             {isEditing ? (
                <>
-                 <input className="w-12 bg-secondary/50 rounded text-center text-[14px] font-bold outline-none" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
                  <span className="text-foreground">-</span>
-                 <input className="w-12 bg-secondary/50 rounded text-center text-[14px] font-bold outline-none" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
                </>
             ) : (
-               <span className="text-[14px] font-bold text-foreground">{data.startDate} - {data.endDate}</span>
+               <span className="text-foreground">{data.startDate} - {data.endDate}</span>
             )}
           </div>
         </div>
@@ -154,13 +158,13 @@ const ViewsDetailScreen = () => {
 
         {/* Donut Area */}
         <div className="flex justify-center py-10">
-          <div className="relative w-[210px] h-[210px]">
+          <div className="relative w-[220px] h-[220px]">
             <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
-              <circle cx="100" cy="100" r="80" fill="none" stroke="hsl(var(--secondary)/0.5)" strokeWidth="8" />
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#D32FE0" strokeWidth="11"
+              <circle cx="100" cy="100" r="80" fill="none" stroke="hsl(var(--secondary)/0.5)" strokeWidth="10" />
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#D32FE0" strokeWidth="14"
                 strokeDasharray={`${(data.followerPct / 100) * 2 * Math.PI * 80} ${2 * Math.PI * 80}`}
                 strokeLinecap="round" />
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#5B21B6" strokeWidth="11"
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#5B21B6" strokeWidth="14"
                 strokeDasharray={`${(data.nonFollowerPct / 100) * 2 * Math.PI * 80} ${2 * Math.PI * 80}`}
                 strokeDashoffset={`${-(data.followerPct / 100) * 2 * Math.PI * 80 - (2 * Math.PI * 80 * 0.005)}`}
                 strokeLinecap="round" />
@@ -175,44 +179,47 @@ const ViewsDetailScreen = () => {
                   className="text-[28px] font-bold text-foreground bg-secondary/50 rounded px-1 outline-none w-28 text-center"
                 />
               ) : (
-                <span className="text-[34px] font-bold text-foreground tracking-tight">{data.views.toLocaleString()}</span>
+                <span className="text-[34px] font-bold text-foreground tracking-tight">{formatCount(data.views)}</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Percentages */}
-        <div className="px-6 space-y-3 mb-6">
+        {/* Legend */}
+        <div className="px-6 space-y-4 mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="h-[9px] w-[9px] rounded-full bg-[#D32FE0]" />
-              <span className="text-[14px] text-foreground font-medium">Followers</span>
+            <div className="flex items-center gap-3">
+              <div className="h-2.5 w-2.5 rounded-full bg-[#D32FE0]" />
+              <span className="text-[15px] text-foreground font-medium">Followers</span>
             </div>
             {isEditing ? (
-               <input className="w-16 bg-secondary/50 rounded text-right text-[14px] font-bold outline-none" value={data.followerPct} onChange={e => updateField('followerPct', parseFloat(e.target.value) || 0)} />
+               <div className="flex items-center gap-1">
+                 <input className="w-16 bg-secondary/50 rounded text-right text-[15px] font-bold outline-none px-1" value={data.followerPct} onChange={e => updateField('followerPct', parseFloat(e.target.value) || 0)} /> %
+               </div>
             ) : (
-               <span className="text-[14px] text-foreground font-medium">{data.followerPct.toFixed(1)}%</span>
+               <span className="text-[15px] text-foreground font-bold">{data.followerPct.toFixed(1)}%</span>
             )}
           </div>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="h-[9px] w-[9px] rounded-full bg-[#5B21B6]" />
-              <span className="text-[14px] text-foreground font-medium">Non-followers</span>
+            <div className="flex items-center gap-3">
+              <div className="h-2.5 w-2.5 rounded-full bg-[#5B21B6]" />
+              <span className="text-[15px] text-foreground font-medium">Non-followers</span>
             </div>
-            <span className="text-[14px] text-foreground font-medium">{data.nonFollowerPct.toFixed(1)}%</span>
+            <span className="text-[15px] text-foreground font-bold">{data.nonFollowerPct.toFixed(1)}%</span>
           </div>
         </div>
 
         <div className="border-b border-border/60 mx-4" />
 
+        {/* Reach */}
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
-            <span className="text-[15px] text-foreground font-medium">Accounts reached</span>
+            <span className="text-[16px] text-foreground font-medium">Accounts reached</span>
             <div className="text-right">
               {isEditing ? (
-                 <input className="w-24 bg-secondary/50 rounded text-right text-[15px] font-bold outline-none" value={data.accountsReached} onChange={e => updateField('accountsReached', parseInt(e.target.value) || 0)} />
+                 <input className="w-24 bg-secondary/50 rounded text-right text-[16px] font-bold outline-none" value={data.accountsReached} onChange={e => updateField('accountsReached', parseInt(e.target.value) || 0)} />
               ) : (
-                 <span className="text-[15px] text-foreground font-bold">{data.accountsReached.toLocaleString()}</span>
+                 <span className="text-[16px] text-foreground font-bold">{formatCount(data.accountsReached)}</span>
               )}
               {isEditing ? (
                  <input className="w-16 bg-secondary/50 rounded text-right text-[12px] font-bold outline-none block ml-auto mt-1" value={data.accountsReachedChange} onChange={e => updateField('accountsReachedChange', e.target.value)} />
@@ -227,30 +234,132 @@ const ViewsDetailScreen = () => {
 
         <div className="border-b border-border/60 mx-4" />
 
+        {/* Content Type */}
+        <div className="px-4 py-7">
+           <h3 className="text-[18px] font-bold text-foreground mb-6">Views by content type</h3>
+           <div className="space-y-6">
+              {data.contentTypes.map((type, i) => (
+                <div key={type.name}>
+                  <div className="flex justify-between items-center mb-2.5">
+                    <span className="text-[15px] font-medium text-foreground">{type.name}</span>
+                    <span className="text-[14px] font-bold text-foreground">{type.total}%</span>
+                  </div>
+                  <div className="h-[14px] w-full bg-secondary/30 rounded-full flex overflow-hidden">
+                    <div className="bg-[#D32FE0]" style={{ width: `${type.followerPct}%` }} />
+                    <div className="bg-[#5B21B6]" style={{ width: `${type.nonFollowerPct}%` }} />
+                  </div>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        <div className="h-[6px] bg-secondary/30" />
+
+        {/* Top Content */}
+        <div className="px-4 py-7">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-[18px] font-bold text-foreground">Top content</h3>
+            <button className="text-[15px] text-[#5B21B6] font-bold">See All</button>
+          </div>
+          <p className="text-[13px] text-muted-foreground mb-6 font-medium">Based on reach</p>
+          
+          <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+            {data.topContent.map((item, i) => (
+              <div key={i} className="flex-shrink-0 w-[124px]">
+                <div className="relative rounded-[12px] overflow-hidden aspect-[1/1.5] shadow-sm">
+                  <img src={item.image} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white" className="drop-shadow-md">
+                      <path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="text-white text-[12px] font-bold drop-shadow-md">{item.views}</span>
+                  </div>
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                       <input className="w-20 bg-white/20 text-white rounded text-center text-[10px] font-bold outline-none" value={item.views} onChange={e => {
+                         const n = [...data.topContent]; n[i].views = e.target.value; updateField('topContent', n);
+                       }} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-[6px] bg-secondary/30" />
+
+        {/* Audience */}
+        <div className="px-4 py-7">
+          <h3 className="text-[18px] font-bold text-foreground mb-5">Audience</h3>
+          <div className="flex gap-2.5 mb-7">
+            {["Countries", "Cities", "Age ranges"].map(t => (
+               <button key={t} onClick={() => setAudienceTab(t)}
+                 className={cn("rounded-full px-5 py-1.5 text-[13px] font-bold border",
+                   audienceTab === t ? "bg-secondary/60 text-foreground border-transparent" : "bg-transparent text-foreground border-border/80"
+                 )}>
+                 {t}
+               </button>
+            ))}
+          </div>
+
+          <div className="space-y-6">
+            {(audienceTab === "Countries" ? data.countries : audienceTab === "Cities" ? data.cities : data.ageRanges).map((item: any, i) => (
+              <div key={item.name || item.range}>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[14px] font-medium text-foreground">{item.name || item.range}</span>
+                  <span className="text-[13px] font-bold text-foreground">{item.pct}%</span>
+                </div>
+                <div className="h-[10px] w-full bg-secondary/30 rounded-full relative overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 bg-[#D32FE0] rounded-full" style={{ width: `${item.pct}%` }} />
+                </div>
+                {isEditing && (
+                   <div className="mt-2 grid grid-cols-2 gap-2">
+                      <input className="bg-secondary/30 rounded px-2 py-0.5 text-[11px] font-bold" value={item.name || item.range} onChange={e => {
+                         const field = audienceTab === "Countries" ? 'countries' : audienceTab === "Cities" ? 'cities' : 'ageRanges';
+                         const n = [...(data as any)[field]]; 
+                         if(item.name) n[i].name = e.target.value; else n[i].range = e.target.value;
+                         updateField(field as any, n);
+                      }} />
+                      <input className="bg-secondary/30 rounded px-2 py-0.5 text-[11px] font-bold" type="number" value={item.pct} onChange={e => {
+                         const field = audienceTab === "Countries" ? 'countries' : audienceTab === "Cities" ? 'cities' : 'ageRanges';
+                         const n = [...(data as any)[field]]; n[i].pct = parseFloat(e.target.value) || 0;
+                         updateField(field as any, n);
+                      }} />
+                   </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="h-[6px] bg-secondary/30" />
+
         {/* Profile activity */}
         <div className="px-4 py-7">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-[17px] font-bold text-foreground">Profile activity</h3>
-              <Info size={16} strokeWidth={2.5} className="text-foreground" />
+              <h3 className="text-[18px] font-bold text-foreground">Profile activity</h3>
+              <Info size={18} strokeWidth={2.5} className="text-foreground" />
             </div>
             {isEditing ? (
                <input className="w-16 bg-secondary/50 rounded text-right font-bold outline-none" value={data.profileActivityTotal} onChange={e => updateField('profileActivityTotal', parseInt(e.target.value) || 0)} />
             ) : (
-               <span className="text-[17px] font-bold text-foreground">{data.profileActivityTotal}</span>
+               <span className="text-[18px] font-bold text-foreground">{data.profileActivityTotal}</span>
             )}
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-7 mt-6">
             <div className="flex items-center justify-between">
-              <span className="text-[15px] text-foreground font-medium">Profile visits</span>
-              <div className="text-right">
-                {isEditing ? (
-                  <input className="w-16 bg-secondary/30 rounded text-right font-bold outline-none" value={data.profileVisits} onChange={e => updateField('profileVisits', parseInt(e.target.value) || 0)} />
-                ) : (
-                  <span className="text-[15px] text-foreground font-bold">{data.profileVisits}</span>
-                )}
+              <div>
+                <p className="text-[15px] font-medium">Profile visits</p>
+                <p className="text-[12px] text-muted-foreground font-medium mt-0.5">{data.profileVisitsChange} vs {data.startDate} - {data.endDate}</p>
               </div>
+              {isEditing ? (
+                <input className="w-16 bg-secondary/30 rounded text-right font-bold outline-none" value={data.profileVisits} onChange={e => updateField('profileVisits', parseInt(e.target.value) || 0)} />
+              ) : (
+                <span className="text-[15px] text-foreground font-bold">{data.profileVisits}</span>
+              )}
             </div>
           </div>
         </div>
@@ -266,7 +375,7 @@ const ViewsDetailScreen = () => {
           >
             <button 
               onClick={saveChanges}
-              className="bg-[#0095f6] text-white font-bold py-3 px-10 rounded-full shadow-2xl active:scale-[0.98] flex items-center gap-2"
+              className="bg-[#0095f6] text-white font-bold py-3.5 px-12 rounded-full shadow-2xl active:scale-[0.98] flex items-center gap-2"
             >
               <Check size={20} strokeWidth={3} />
               SAVE CHANGES
@@ -277,18 +386,5 @@ const ViewsDetailScreen = () => {
     </div>
   );
 };
-
-const Film = ({ size, className }: { size: number; className?: string }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M19.82 2H4.18C2.97608 2 2 2.97608 2 4.18V19.82C2 21.0239 2.97608 22 4.18 22H19.82C21.0239 22 22 21.0239 22 19.82V4.18C22 2.97608 21.0239 2 19.82 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M7 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M17 2V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 12H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 7H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M2 17H7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M17 17H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M17 7H22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
 
 export default ViewsDetailScreen;
