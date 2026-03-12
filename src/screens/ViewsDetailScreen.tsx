@@ -161,27 +161,24 @@ const ViewsDetailScreen = () => {
         onMouseLeave={endPress}
       >
         {/* Date line */}
+        {/* Date line */}
         <div className="flex items-center justify-between px-4 py-3 mt-1">
-            <div className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-1 py-1 text-[14px] font-bold text-foreground">
-              <button className={cn("flex-1 py-1.5 rounded-full text-[13px] font-bold transition-colors", activityTab === 'Followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setActivityTab('Followers')}>Followers</button>
-              <button className={cn("flex-1 py-1.5 rounded-full text-[13px] font-bold transition-colors", activityTab === 'Non-followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setActivityTab('Non-followers')}>Non-followers</button>
-            </div>
-            <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
-              {isEditing ? (
-                 <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
-              ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
-            </button>
-            <div className="flex items-center gap-1 font-bold text-[14px]">
-              {isEditing ? (
-                 <>
-                   <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
-                   <span className="text-foreground">-</span>
-                   <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
-                 </>
-              ) : (
-                 <span className="text-foreground">{data.startDate} - {data.endDate}</span>
-              )}
-            </div>
+          <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
+            {isEditing ? (
+               <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
+            ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
+          </button>
+          <div className="flex items-center gap-1 font-bold text-[14px]">
+            {isEditing ? (
+               <>
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
+                 <span className="text-foreground">-</span>
+                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
+               </>
+            ) : (
+               <span className="text-foreground">{data.startDate} - {data.endDate}</span>
+            )}
+          </div>
         </div>
 
         <div className="border-b border-border/60 mx-4 mt-1" />
