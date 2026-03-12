@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { ArrowLeft, Info, ChevronDown, Check, Plus, ChevronRight } from "lucide-react";
+import { ArrowLeft, Info, ChevronDown, Check, Film, Plus, ChevronRight, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -319,22 +319,31 @@ const ViewsDetailScreen = () => {
                   className={cn("relative rounded-[12px] overflow-hidden aspect-[1/1.5] shadow-sm", isEditing && "cursor-pointer ring-2 ring-[#0095f6] ring-offset-2")}
                 >
                   <img src={item.image} alt="" className="w-full h-full object-cover" />
-                  <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="white" className="drop-shadow-md">
-                      <path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <span className="text-white text-[12px] font-bold drop-shadow-md">{item.views}</span>
+                  <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/20 rounded-full p-1">
+                     <Film size={14} className="text-white" />
                   </div>
-                  {isEditing && (
-                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2">
-                       <input className="w-20 bg-white text-black rounded text-center text-[10px] font-bold outline-none py-1" value={item.views} onClick={e => e.stopPropagation()} onChange={e => {
-                         const n = [...data.topContent]; n[i].views = e.target.value; updateField('topContent', n);
-                       }} />
-                       <div className="bg-white/80 p-1.5 rounded-full">
-                          <Plus size={16} className="text-black" />
-                       </div>
-                    </div>
-                  )}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/80 rounded-full px-3 py-1 flex items-center gap-1 shadow-sm">
+                     <span className="text-white text-[11px] font-bold">{item.views}</span>
+                  </div>
+                   {isEditing && (
+                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2">
+                        <input className="w-20 bg-white text-black rounded text-center text-[10px] font-bold outline-none py-1" value={item.views} onClick={e => e.stopPropagation()} onChange={e => {
+                          const n = [...data.topContent]; n[i].views = e.target.value; updateField('topContent', n);
+                        }} />
+                        <div className="bg-white/90 p-2 rounded-full shadow-lg border border-gray-200">
+                           <Camera size={18} className="text-[#0095f6]" />
+                        </div>
+                     </div>
+                   )}
+                </div>
+                <div className="mt-2 text-center">
+                   {isEditing ? (
+                      <input className="bg-secondary/50 rounded text-[12px] w-full text-center font-medium outline-none text-foreground" value={item.date} onChange={e => {
+                         const n = [...data.topContent]; n[i].date = e.target.value; updateField('topContent', n);
+                      }} />
+                   ) : (
+                      <span className="text-[12px] text-muted-foreground font-bold">{item.date}</span>
+                   )}
                 </div>
               </div>
             ))}
