@@ -83,6 +83,8 @@ const ViewsDetailScreen = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [audienceTab, setAudienceTab] = useState("Countries");
+  const [activityTab, setActivityTab] = useState("Followers");
+  const [ageTab, setAgeTab] = useState("Followers");
 
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -160,22 +162,26 @@ const ViewsDetailScreen = () => {
       >
         {/* Date line */}
         <div className="flex items-center justify-between px-4 py-3 mt-1">
-          <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
-            {isEditing ? (
-               <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
-            ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
-          </button>
-          <div className="flex items-center gap-1 font-bold text-[14px]">
-            {isEditing ? (
-               <>
-                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
-                 <span className="text-foreground">-</span>
-                 <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
-               </>
-            ) : (
-               <span className="text-foreground">{data.startDate} - {data.endDate}</span>
-            )}
-          </div>
+            <div className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-1 py-1 text-[14px] font-bold text-foreground">
+              <button className={cn("flex-1 py-1.5 rounded-full text-[13px] font-bold transition-colors", activityTab === 'Followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setActivityTab('Followers')}>Followers</button>
+              <button className={cn("flex-1 py-1.5 rounded-full text-[13px] font-bold transition-colors", activityTab === 'Non-followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setActivityTab('Non-followers')}>Non-followers</button>
+            </div>
+            <button className="flex items-center gap-1 bg-secondary/50 rounded-[10px] px-3 py-1.5 text-[14px] font-bold text-foreground">
+              {isEditing ? (
+                 <input className="bg-transparent text-[14px] font-bold outline-none w-24" value={data.dateRange} onChange={e => updateField('dateRange', e.target.value)} />
+              ) : data.dateRange} <ChevronDown size={18} strokeWidth={2.5} />
+            </button>
+            <div className="flex items-center gap-1 font-bold text-[14px]">
+              {isEditing ? (
+                 <>
+                   <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.startDate} onChange={e => updateField('startDate', e.target.value)} />
+                   <span className="text-foreground">-</span>
+                   <input className="w-12 bg-secondary/50 rounded text-center outline-none px-1" value={data.endDate} onChange={e => updateField('endDate', e.target.value)} />
+                 </>
+              ) : (
+                 <span className="text-foreground">{data.startDate} - {data.endDate}</span>
+              )}
+            </div>
         </div>
 
         <div className="border-b border-border/60 mx-4 mt-1" />
@@ -194,7 +200,7 @@ const ViewsDetailScreen = () => {
                 strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[14px] text-muted-foreground font-medium mb-1">Views</span>
+              <span className="text-[14px] text-white font-medium mb-1">Views</span>
               {isEditing ? (
                 <input 
                   type="number"
@@ -227,9 +233,22 @@ const ViewsDetailScreen = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-2.5 w-2.5 rounded-full bg-[#5B21B6]" />
-              <span className="text-[15px] text-foreground font-medium">Non-followers</span>
+              <span className="text-[15px] text-white font-medium">Non-followers</span>
             </div>
-            <span className="text-[15px] text-foreground font-bold">{data.nonFollowerPct.toFixed(1)}%</span>
+            {isEditing ? (
+               <div className="flex items-center gap-1">
+                  <input className="w-12 bg-secondary/50 rounded text-right text-[15px] font-bold outline-none text-white" value={data.nonFollowerPct} onChange={e => updateField('nonFollowerPct', parseFloat(e.target.value) || 0)} />
+                  <span className="text-white">%</span>
+               </div>
+            ) : (
+               <span className="text-[15px] text-white font-medium">{data.nonFollowerPct}%</span>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                   <button className={cn("px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors", ageTab === 'Followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setAgeTab('Followers')}>Followers</button>
+                   <button className={cn("px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors", ageTab === 'Non-followers' ? "bg-white text-[#000000]" : "bg-[#262626] text-white")} onClick={() => setAgeTab('Non-followers')}>Non-followers</button>
+                </div>
           </div>
         </div>
 
@@ -361,7 +380,7 @@ const ViewsDetailScreen = () => {
 
           <div className="flex gap-4 overflow-x-auto hide-scrollbar px-4 pb-4">
             {/* Towns/Cities */}
-            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#0F0F0F] text-black dark:text-white rounded-[16px] border border-gray-100 dark:border-gray-800 p-3 shadow-sm transition-colors">
                 <h4 className="text-[17px] font-bold mb-6">Top towns/cities</h4>
                 <div className="space-y-6">
                     {data.cities.map((city, i) => (
@@ -388,8 +407,8 @@ const ViewsDetailScreen = () => {
                 </div>
             </div>
 
-            {/* Countries */}
-            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+            {/* Countries */ }
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#0F0F0F] text-black dark:text-white rounded-[16px] border border-gray-100 dark:border-gray-800 p-3 shadow-sm transition-colors">
                 <h4 className="text-[17px] font-bold mb-6">Top countries</h4>
                 <div className="space-y-6">
                     {data.countries.map((country, i) => (
@@ -417,7 +436,7 @@ const ViewsDetailScreen = () => {
             </div>
 
             {/* Age Ranges */}
-            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#0F0F0F] text-black dark:text-white rounded-[16px] border border-gray-100 dark:border-gray-800 p-3 shadow-sm transition-colors">
                 <h4 className="text-[17px] font-bold mb-6">Top age ranges</h4>
                 <div className="space-y-6">
                     {data.ageRanges.map((range, i) => (
@@ -445,7 +464,7 @@ const ViewsDetailScreen = () => {
             </div>
 
             {/* Gender */}
-            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#1C1C1E] text-black dark:text-white rounded-[12px] border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+            <div className="flex-shrink-0 w-[300px] bg-white dark:bg-[#0F0F0F] text-black dark:text-white rounded-[16px] border border-gray-100 dark:border-gray-800 p-3 shadow-sm transition-colors">
                 <h4 className="text-[17px] font-bold mb-6">Gender</h4>
                 <div className="space-y-6 mt-12">
                     {data.gender.map((g, i) => (
