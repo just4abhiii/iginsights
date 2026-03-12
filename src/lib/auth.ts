@@ -107,6 +107,7 @@ function getAdminPass(): string {
 }
 
 async function apiCall(method: string, body?: any, query?: string): Promise<any> {
+    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
     const url = query ? `${API_URL}?${query}` : API_URL;
     const options: RequestInit = {
         method,
@@ -117,13 +118,37 @@ async function apiCall(method: string, body?: any, query?: string): Promise<any>
     };
     if (body) options.body = JSON.stringify(body);
 
-    const res = await fetch(url, options);
-    const data = await res.json();
+    try {
+        const res = await fetch(url, options);
+        // If we get an error response (like 404/500), try to parse JSON
+        const data = await res.json();
 
-    if (!res.ok) {
-        throw new Error(data.error || `API error: ${res.status}`);
+        if (!res.ok) {
+            throw new Error(data.error || `API error: ${res.status}`);
+        }
+        return data;
+    } catch (err: any) {
+        // LOCALHOST BYPASS: If API fails on localhost, we allow it for development
+        if (isLocalhost) {
+            console.warn("[Auth] Localhost API fail bypass active:", err);
+            
+            // Mock responses for critical auth routes
+            if (method === "PUT") {
+                return { 
+                    success: true, 
+                    key: { 
+                        key: body?.accessKey || "LOCAL-DEV-KEY",
+                        label: "Local Developer",
+                        active: true
+                    } 
+                };
+            }
+            if (method === "GET" && query?.includes("admin=")) {
+                return { success: true, keys: [] };
+            }
+        }
+        throw err;
     }
-    return data;
 }
 
 // ==================== KEY MANAGEMENT (Admin) ====================
@@ -286,6 +311,8 @@ export async function isAuthenticatedAsync(): Promise<boolean> {
     const session = getAuthSession();
     if (!session) return false;
 
+    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
     try {
         // Verify key is still valid by trying to validate again
         const deviceFP = getDeviceFingerprint();
@@ -299,6 +326,9 @@ export async function isAuthenticatedAsync(): Promise<boolean> {
         });
 
         if (!res.ok) {
+            // If on localhost, we don't clear the session even if the API is missing/404
+            if (isLocalhost) return true;
+            
             // Key is invalid/expired/revoked — clear session
             clearAuthSession();
             return false;
