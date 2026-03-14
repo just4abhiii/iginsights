@@ -91,30 +91,34 @@ const App = () => {
             {/* Admin panel - always accessible (has its own auth) */}
             <Route path="/admin" element={<AdminPanel />} />
 
-            {/* Direct access for APK - No LoginScreen or InstallGate */}
+            {/* Direct access for APK - Auth required, but NO InstallGate */}
             <Route
               path="*"
               element={
-                <>
-                  {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
-                  {showSplash && <div className="fixed inset-0 z-[9998] bg-white" />}
-                  <AppLayout>
-                    <Routes>
-                      <Route path="/" element={<HomeScreen />} />
-                      <Route path="/search" element={<SearchScreen />} />
-                      <Route path="/create" element={<MessagesScreen />} />
-                      <Route path="/reels" element={<ReelsScreen />} />
-                      <Route path="/profile" element={<ProfileScreen />} />
-                      <Route path="/analytics" element={<AnalyticsScreen />} />
-                      <Route path="/analytics/views" element={<ViewsDetailScreen />} />
-                      <Route path="/analytics/interactions" element={<InteractionsDetailScreen />} />
-                      <Route path="/analytics/followers" element={<FollowersDetailScreen />} />
-                      <Route path="/reel-insights/:id" element={<ReelInsightsScreen />} />
-                      <Route path="/reel/:id" element={<ReelDetailScreen />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </AppLayout>
-                </>
+                !authed ? (
+                  <LoginScreen onLoginSuccess={handleLoginSuccess} />
+                ) : (
+                  <>
+                    {showSplash && <SplashScreen onFinish={handleSplashFinish} />}
+                    {showSplash && <div className="fixed inset-0 z-[9998] bg-white" />}
+                    <AppLayout>
+                      <Routes>
+                        <Route path="/" element={<HomeScreen />} />
+                        <Route path="/search" element={<SearchScreen />} />
+                        <Route path="/create" element={<MessagesScreen />} />
+                        <Route path="/reels" element={<ReelsScreen />} />
+                        <Route path="/profile" element={<ProfileScreen />} />
+                        <Route path="/analytics" element={<AnalyticsScreen />} />
+                        <Route path="/analytics/views" element={<ViewsDetailScreen />} />
+                        <Route path="/analytics/interactions" element={<InteractionsDetailScreen />} />
+                        <Route path="/analytics/followers" element={<FollowersDetailScreen />} />
+                        <Route path="/reel-insights/:id" element={<ReelInsightsScreen />} />
+                        <Route path="/reel/:id" element={<ReelDetailScreen />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </AppLayout>
+                  </>
+                )
               }
             />
           </Routes>
