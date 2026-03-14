@@ -26,15 +26,15 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Layout wrapper that conditionally shows BottomNav (hide on admin route)
+// Layout wrapper that conditionally shows BottomNav
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isAdmin = location.pathname === "/admin";
+  const hideBottomNav = location.pathname === "/admin" || location.pathname.startsWith("/reel-insights/");
   return (
     <div className="mx-auto max-w-lg min-h-screen bg-background">
       <AnalyticsTracker />
       {children}
-      {!isAdmin && <BottomNav />}
+      {!hideBottomNav && <BottomNav />}
     </div>
   );
 };
