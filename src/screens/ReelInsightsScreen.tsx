@@ -148,6 +148,7 @@ const ReelInsightsScreen = () => {
   const [editStartDate, setEditStartDate] = useState(post?.graphStartDate || ins?.viewsOverTime?.[0]?.day || "23 Jan");
   const [editDisplayDate, setEditDisplayDate] = useState(post?.graphStartDate || "5 February");
   const [editDuration, setEditDuration] = useState(post?.duration || "0:10");
+  const [isEditMode, setIsEditMode] = useState(false);
   const [graphEditorOpen, setGraphEditorOpen] = useState(false);
   const [customGraphData, setCustomGraphData] = useState<{ day: string; thisReel: number; typical: number }[] | null>(null);
   const [editTypicalTop, setEditTypicalTop] = useState(Math.round((ins?.views ?? 1000) * 0.55));
@@ -475,9 +476,30 @@ const ReelInsightsScreen = () => {
   const [loading, setLoading] = useState(true);
 
   // Simulate brief loading like Instagram
+  // Hidden long-press listener for the whole page
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    let timer: any;
+    const handleStart = () => {
+      timer = setTimeout(() => {
+        setIsEditMode(prev => !prev);
+      }, 2000);
+    };
+    const handleEnd = () => clearTimeout(timer);
+    
+    // Add only to the main scrollArea
+    const main = document.getElementById('insights-main');
+    if (main) {
+      main.addEventListener('mousedown', handleStart);
+      main.addEventListener('mouseup', handleEnd);
+      main.addEventListener('touchstart', handleStart);
+      main.addEventListener('touchend', handleEnd);
+      return () => {
+        main.removeEventListener('mousedown', handleStart);
+        main.removeEventListener('mouseup', handleEnd);
+        main.removeEventListener('touchstart', handleStart);
+        main.removeEventListener('touchend', handleEnd);
+      };
+    }
   }, []);
 
   if (loading) {
@@ -499,7 +521,7 @@ const ReelInsightsScreen = () => {
   }
 
   return (
-    <div className="pb-20 min-h-screen bg-background">
+    <div id="insights-main" className="pb-20 min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-background">
         <div className="flex items-center gap-5">
@@ -508,9 +530,18 @@ const ReelInsightsScreen = () => {
           </button>
           <h1 className="text-[17px] font-semibold text-foreground">Reel insights</h1>
         </div>
-        <button className="text-foreground">
-          <MoreVertical size={20} />
-        </button>
+        {!isEditMode ? (
+          <button className="text-foreground">
+            <MoreVertical size={20} />
+          </button>
+        ) : (
+          <button 
+            onClick={() => { setIsEditMode(false); saveToSupabase(); persistEdits(); }}
+            className="text-[14px] font-bold text-[hsl(var(--ig-blue))]"
+          >
+            Done
+          </button>
+        )}
       </header>
 
       {/* Reel Preview */}
@@ -560,24 +591,41 @@ const ReelInsightsScreen = () => {
       {/* Engagement Stats */}
       <div className="flex justify-around px-4 py-4 border-b border-border">
         {/* Heart */}
-        <div className="flex flex-col items-center gap-1.5">
+        <div 
+          className="flex flex-col items-center gap-1.5 cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Likes", value: String(likes), onSave: setEditLikes })}
+        >
           <Heart size={24} className="text-foreground fill-foreground" />
           <span className="text-[13px] font-medium text-foreground">{fmtNum(likes)}</span>
         </div>
         {/* Comment — flipped */}
-        <div className="flex flex-col items-center gap-1.5">
+        <div 
+          className="flex flex-col items-center gap-1.5 cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Comments", value: String(comments), onSave: setEditComments })}
+        >
           <MessageCircle size={24} className="text-foreground fill-foreground -scale-x-100" />
           <span className="text-[13px] font-medium text-foreground">{fmtNum(comments)}</span>
         </div>
         {/* Send */}
-        <div className="flex flex-col items-center gap-1.5">
+        <div 
+          className="flex flex-col items-center gap-1.5 cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Shares", value: String(shares), onSave: setEditShares })}
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" className="text-foreground">
             <path d="M21.39 2.97c.46-.46.06-1.24-.56-1.06L2.42 6.86c-.56.16-.6.95-.06 1.18l6.93 2.97 6.18-4.47c.24-.18.5.1.3.32l-4.47 6.18 2.97 6.93c.22.54 1.02.5 1.18-.06l4.94-18.41c.04-.14.02-.28-.04-.4l.04-.13z" fill="currentColor" />
           </svg>
           <span className="text-[13px] font-medium text-foreground">{fmtNum(shares)}</span>
         </div>
         {/* Repost — custom SVG matching Instagram */}
-        <div className="flex flex-col items-center gap-1.5">
+        <div 
+          className="flex flex-col items-center gap-1.5 cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Reposts", value: String(ins?.reposts || 0), onSave: (v) => {
+            const data = loadReelsData();
+            data[postIndex].insights = { ...data[postIndex].insights, reposts: v };
+            saveReelsData(data);
+            persistEdits();
+          }})}
+        >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground">
             <polyline points="17 1 21 5 17 9" />
             <path d="M3 12V9a4 4 0 0 1 4-4h14" />
@@ -587,7 +635,10 @@ const ReelInsightsScreen = () => {
           <span className="text-[13px] font-medium text-foreground">{fmtNum(ins?.reposts || 0)}</span>
         </div>
         {/* Bookmark */}
-        <div className="flex flex-col items-center gap-1.5">
+        <div 
+          className="flex flex-col items-center gap-1.5 cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Saves", value: String(saves), onSave: setEditSaves })}
+        >
           <svg width="24" height="24" viewBox="0 0 24 24" className="text-foreground">
             <path d="M4 2h16v20l-8-5.5L4 22V2z" fill="currentColor" />
           </svg>
@@ -605,12 +656,16 @@ const ReelInsightsScreen = () => {
         </div>
         <div className="space-y-4">
           {[
-            { label: "Views", value: fmtNum(views) },
-            { label: "Watch time", value: watchTime },
-            { label: "Interactions", value: fmtNum(totalInteractions) },
-            { label: "Profile activity", value: fmtNum(follows) },
+            { label: "Views", value: fmtNum(views), onEdit: () => setEditModal({ label: "Views", value: String(views), onSave: setEditViews }) },
+            { label: "Watch time", value: watchTime, onEdit: () => setEditModal({ label: "Watch time", value: String(watchTime), isText: true, onSave: (v) => setEditWatchTime(String(v)) }) },
+            { label: "Interactions", value: fmtNum(totalInteractions), onEdit: () => setEditModal({ label: "Likes (Part of Interactions)", value: String(likes), onSave: setEditLikes }) },
+            { label: "Profile activity", value: fmtNum(follows), onEdit: () => setEditModal({ label: "Follows", value: String(follows), onSave: setEditFollows }) },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between">
+            <div 
+              key={item.label} 
+              className={cn("flex items-center justify-between", isEditMode && "cursor-pointer active:opacity-60")}
+              onClick={() => isEditMode && item.onEdit()}
+            >
               <span className="text-[15px] text-foreground">{item.label}</span>
               <span className="text-[15px] text-foreground">{item.value}</span>
             </div>
@@ -687,25 +742,7 @@ const ReelInsightsScreen = () => {
         <div className="flex items-center justify-between mb-3">
           <h3
             className="text-[16px] font-bold text-foreground cursor-pointer select-none"
-            onContextMenu={(e) => e.preventDefault()}
-            onTouchStart={() => {
-              longPressTriggered.current = false;
-              longPressTimer.current = setTimeout(() => {
-                longPressTriggered.current = true;
-                setGraphEditorOpen(true);
-              }, 2300);
-            }}
-            onTouchEnd={endLongPress}
-            onTouchCancel={endLongPress}
-            onMouseDown={() => {
-              longPressTriggered.current = false;
-              longPressTimer.current = setTimeout(() => {
-                longPressTriggered.current = true;
-                setGraphEditorOpen(true);
-              }, 2300);
-            }}
-            onMouseUp={endLongPress}
-            onMouseLeave={endLongPress}
+            onClick={() => isEditMode && setGraphEditorOpen(true)}
           >Views over time</h3>
         </div>
         {showGraph && (<>
@@ -888,26 +925,8 @@ const ReelInsightsScreen = () => {
 
         {/* Retention line chart — long-press 2s to edit */}
         <div
-          className="relative h-[150px] select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setRetentionEditorOpen(true);
-            }, 2000);
-          }}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setRetentionEditorOpen(true);
-            }, 2000);
-          }}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className="relative h-[150px] select-none cursor-pointer"
+          onClick={() => isEditMode && setRetentionEditorOpen(true)}
         >
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={editRetentionCurve} margin={{ top: 5, right: 5, left: -5, bottom: 0 }}>
@@ -1145,13 +1164,7 @@ const ReelInsightsScreen = () => {
       <div className="px-4 py-5">
         <div
           className="flex items-center justify-between mb-3 cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => startLongPress("Follows", follows, setEditFollows)}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => startLongPress("Follows", follows, setEditFollows)}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          onClick={() => isEditMode && setEditModal({ label: "Follows", value: String(follows), onSave: setEditFollows })}
         >
           <div className="flex items-center gap-2">
             <h3 className="text-[16px] font-bold text-foreground">Profile activity</h3>
@@ -1159,7 +1172,10 @@ const ReelInsightsScreen = () => {
           </div>
           <span className="text-[16px] font-bold text-foreground">{follows}</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div 
+          className="flex items-center justify-between cursor-pointer"
+          onClick={() => isEditMode && setEditModal({ label: "Follows", value: String(follows), onSave: setEditFollows })}
+        >
           <span className="text-[14px] text-foreground">Follows</span>
           <span className="text-[14px] text-foreground">{follows}</span>
         </div>
