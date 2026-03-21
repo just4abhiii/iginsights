@@ -476,17 +476,25 @@ const ReelInsightsScreen = () => {
   const [loading, setLoading] = useState(true);
 
   // Simulate brief loading like Instagram
-  // Hidden long-press listener for the whole page
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Hidden long-press listener for the whole page (2s)
   useEffect(() => {
     let timer: any;
-    const handleStart = () => {
+    const handleStart = (e: any) => {
+      // Don't trigger if clicking a button or input
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      
       timer = setTimeout(() => {
         setIsEditMode(prev => !prev);
       }, 2000);
     };
     const handleEnd = () => clearTimeout(timer);
     
-    // Add only to the main scrollArea
+    // Add only to the main div
     const main = document.getElementById('insights-main');
     if (main) {
       main.addEventListener('mousedown', handleStart);
@@ -504,7 +512,7 @@ const ReelInsightsScreen = () => {
 
   if (loading) {
     return (
-      <div className="pb-20 min-h-screen bg-background">
+      <div className="pb-20 min-h-screen bg-background flex flex-col">
         <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-background">
           <div className="flex items-center gap-5">
             <button onClick={() => navigate('/profile')} className="text-foreground">
@@ -513,7 +521,7 @@ const ReelInsightsScreen = () => {
             <h1 className="text-[17px] font-semibold text-foreground">Reel insights</h1>
           </div>
         </header>
-        <div className="flex-1 flex items-center justify-center" style={{ minHeight: 'calc(100vh - 60px)' }}>
+        <div className="flex-1 flex items-center justify-center">
           <div className="h-7 w-7 rounded-full border-[1.5px] border-muted-foreground/25 border-t-muted-foreground/60 animate-spin" />
         </div>
       </div>
