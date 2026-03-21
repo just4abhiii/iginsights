@@ -786,7 +786,7 @@ const ReelInsightsScreen = () => {
               </button>
             ))}
           </div>
-          <div className="h-44 overflow-hidden relative">
+          <div className={cn("h-44 overflow-hidden relative", isEditMode && "cursor-pointer active:opacity-80 rounded-lg transition-opacity")} onClick={() => isEditMode && setGraphEditorOpen(true)}>
             <div
               className="flex transition-transform duration-300 ease-in-out h-full"
               style={{ width: '300%', transform: `translateX(-${filterOrder.indexOf(viewsFilter) * (100 / 3)}%)` }}
