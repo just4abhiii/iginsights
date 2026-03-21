@@ -804,12 +804,11 @@ const ReelInsightsScreen = () => {
                       {(() => {
                         const ratios = [1, followerPct / 100, nonFollowerPct / 100];
                         const r = ratios[gi];
-                        const centerVal = Math.round(editYCenter * r);
                         const topVal = Math.round(editYTop * r);
+                        const centerVal = Math.round(topVal / 2);
                         const yTicks = [0, centerVal, topVal];
-                        // Get max possible value from all relevant sources to prevent clipping
-                        const overallMax = Math.max(editViews * r, editTypicalTop * r, topVal);
-                        const yDomain = [0, Math.round(overallMax * 1.05)];
+                        // Domain max = topVal so reference lines space evenly: 0 (bottom), center (middle), top (top)
+                        const yDomain: [number, number] = [0, topVal];
                         return (
                           <>
                             <CartesianGrid horizontal={false} vertical={false} />
@@ -1408,17 +1407,7 @@ const ReelInsightsScreen = () => {
                   </div>
                   <div className="flex gap-2 mb-3">
                     <div className="flex-1">
-                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Center Line (e.g. 500)</label>
-                      <input
-                        value={editYCenter}
-                        onChange={(e) => setEditYCenter(Math.max(0, parseInt(e.target.value) || 0))}
-                        type="number"
-                        min="0"
-                        className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Top Line (e.g. 1K)</label>
+                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Y-axis Top (e.g. 1000)</label>
                       <input
                         value={editYTop}
                         onChange={(e) => setEditYTop(Math.max(0, parseInt(e.target.value) || 0))}
@@ -1426,6 +1415,7 @@ const ReelInsightsScreen = () => {
                         min="0"
                         className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
                       />
+                      <p className="text-[9px] text-muted-foreground mt-0.5 text-center">Center line auto = {Math.round(editYTop / 2)}</p>
                     </div>
                   </div>
                   {/* Time Range Mode */}
