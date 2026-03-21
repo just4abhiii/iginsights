@@ -251,10 +251,14 @@ const ReelInsightsScreen = () => {
       caption: postCaption,
       ...overrides,
     };
-    await (supabase as any).from('reels_data').upsert(
-      { account: accountUsername, post_index: postIndex, data, updated_at: new Date().toISOString() },
-      { onConflict: 'account,post_index' }
-    );
+    try {
+      await (supabase as any).from('reels_data').upsert(
+        { account: accountUsername, post_index: postIndex, data, updated_at: new Date().toISOString() },
+        { onConflict: 'account,post_index' }
+      );
+    } catch (e) {
+      console.warn('[Supabase] Save failed, using localStorage only:', e);
+    }
   }, [
     editViews, editLikes, editComments, editShares, editSaves,
     editFollowerPct, editGenderMale, editViewRate,
@@ -267,54 +271,57 @@ const ReelInsightsScreen = () => {
     accountUsername, postIndex,
   ]);
 
-  // ── Load from Supabase on mount ────────────────────────────────────────────
+  // ── Load from Supabase on mount (non-blocking) ─────────────────────────────
   useEffect(() => {
     (async () => {
-      const { data: rows } = await (supabase as any)
-        .from('reels_data')
-        .select('data')
-        .eq('account', accountUsername)
-        .eq('post_index', postIndex)
-        .maybeSingle();
-      if (!rows?.data) return;
-      const d = rows.data as Record<string, unknown>;
-      if (d.views != null) setEditViews(d.views as number);
-      if (d.likes != null) setEditLikes(d.likes as number);
-      if (d.comments != null) setEditComments(d.comments as number);
-      if (d.shares != null) setEditShares(d.shares as number);
-      if (d.saves != null) setEditSaves(d.saves as number);
-      if (d.followerViewsPct != null) setEditFollowerPct(d.followerViewsPct as number);
-      if (d.genderMale != null) setEditGenderMale(d.genderMale as number);
-      if (d.viewRatePast3Sec != null) setEditViewRate(d.viewRatePast3Sec as number);
-      if (d.graphStartDate) setEditStartDate(d.graphStartDate as string);
-      if (d.displayDate) setEditDisplayDate(d.displayDate as string);
-      if (d.duration) setEditDuration(d.duration as string);
-      if (d.watchTime) setEditWatchTime(d.watchTime as string);
-      if (d.avgWatchTime) setEditAvgWatchTime(d.avgWatchTime as string);
-      if (d.skipRate != null) setEditSkipRate(d.skipRate as number);
-      if (d.typicalSkipRate != null) setEditTypicalSkipRate(d.typicalSkipRate as number);
-      if (d.typicalViewRate != null) setEditTypicalViewRate(d.typicalViewRate as number);
-      if (d.monetisationStatus && typeof d.monetisationStatus === 'string') setMonetisationStatus(d.monetisationStatus);
-      if (d.retentionCurve) setEditRetentionCurve(d.retentionCurve as { t: string; pct: number }[]);
-      if (d.typicalRetentionCurve) setTypicalRetentionCurve(d.typicalRetentionCurve as { t: string; pct: number }[]);
-      if (d.customGraphData) setCustomGraphData(d.customGraphData as { day: string; thisReel: number; typical: number }[]);
-      if (d.yCenter != null) setEditYCenter(d.yCenter as number);
-      if (d.yTop != null) setEditYTop(d.yTop as number);
-      if (d.editTypicalTop != null) setEditTypicalTop(d.editTypicalTop as number);
-      if (d.xDate1) setEditXDate1(d.xDate1 as string);
-      if (d.xDate2) setEditXDate2(d.xDate2 as string);
-      if (d.xDate3) setEditXDate3(d.xDate3 as string);
-      if (d.timeRangeMode) setTimeRangeMode(d.timeRangeMode as 'custom' | '12h' | '24h');
-      if (d.showGraph != null) setShowGraph(d.showGraph as boolean);
-      if (d.sources) setEditSources(d.sources as { name: string; pct: number }[]);
-      if (d.countries) setEditCountries(d.countries as { name: string; pct: number }[]);
-      if (d.ageGroups) setEditAgeGroups(d.ageGroups as { range: string; pct: number }[]);
-      if (d.accountsReached != null) setEditAccountsReached(d.accountsReached as number);
-      if (d.follows != null) setEditFollows(d.follows as number);
-      // Load media fields for cross-device sync
-      if (d.thumbnail) setPostImage(d.thumbnail as string);
-      if (d.videoUrl) setPostVideoUrl(d.videoUrl as string);
-      if (d.caption) setPostCaption(d.caption as string);
+      try {
+        const { data: rows } = await (supabase as any)
+          .from('reels_data')
+          .select('data')
+          .eq('account', accountUsername)
+          .eq('post_index', postIndex)
+          .maybeSingle();
+        if (!rows?.data) return;
+        const d = rows.data as Record<string, unknown>;
+        if (d.views != null) setEditViews(d.views as number);
+        if (d.likes != null) setEditLikes(d.likes as number);
+        if (d.comments != null) setEditComments(d.comments as number);
+        if (d.shares != null) setEditShares(d.shares as number);
+        if (d.saves != null) setEditSaves(d.saves as number);
+        if (d.followerViewsPct != null) setEditFollowerPct(d.followerViewsPct as number);
+        if (d.genderMale != null) setEditGenderMale(d.genderMale as number);
+        if (d.viewRatePast3Sec != null) setEditViewRate(d.viewRatePast3Sec as number);
+        if (d.graphStartDate) setEditStartDate(d.graphStartDate as string);
+        if (d.displayDate) setEditDisplayDate(d.displayDate as string);
+        if (d.duration) setEditDuration(d.duration as string);
+        if (d.watchTime) setEditWatchTime(d.watchTime as string);
+        if (d.avgWatchTime) setEditAvgWatchTime(d.avgWatchTime as string);
+        if (d.skipRate != null) setEditSkipRate(d.skipRate as number);
+        if (d.typicalSkipRate != null) setEditTypicalSkipRate(d.typicalSkipRate as number);
+        if (d.typicalViewRate != null) setEditTypicalViewRate(d.typicalViewRate as number);
+        if (d.monetisationStatus && typeof d.monetisationStatus === 'string') setMonetisationStatus(d.monetisationStatus);
+        if (d.retentionCurve) setEditRetentionCurve(d.retentionCurve as { t: string; pct: number }[]);
+        if (d.typicalRetentionCurve) setTypicalRetentionCurve(d.typicalRetentionCurve as { t: string; pct: number }[]);
+        if (d.customGraphData) setCustomGraphData(d.customGraphData as { day: string; thisReel: number; typical: number }[]);
+        if (d.yCenter != null) setEditYCenter(d.yCenter as number);
+        if (d.yTop != null) setEditYTop(d.yTop as number);
+        if (d.editTypicalTop != null) setEditTypicalTop(d.editTypicalTop as number);
+        if (d.xDate1) setEditXDate1(d.xDate1 as string);
+        if (d.xDate2) setEditXDate2(d.xDate2 as string);
+        if (d.xDate3) setEditXDate3(d.xDate3 as string);
+        if (d.timeRangeMode) setTimeRangeMode(d.timeRangeMode as 'custom' | '12h' | '24h');
+        if (d.showGraph != null) setShowGraph(d.showGraph as boolean);
+        if (d.sources) setEditSources(d.sources as { name: string; pct: number }[]);
+        if (d.countries) setEditCountries(d.countries as { name: string; pct: number }[]);
+        if (d.ageGroups) setEditAgeGroups(d.ageGroups as { range: string; pct: number }[]);
+        if (d.accountsReached != null) setEditAccountsReached(d.accountsReached as number);
+        if (d.follows != null) setEditFollows(d.follows as number);
+        if (d.thumbnail) setPostImage(d.thumbnail as string);
+        if (d.videoUrl) setPostVideoUrl(d.videoUrl as string);
+        if (d.caption) setPostCaption(d.caption as string);
+      } catch (e) {
+        console.warn('[Supabase] Load failed, using localStorage data:', e);
+      }
     })();
   }, [accountUsername, postIndex]);
   // If saved viewsOverTime has custom labels at ANY of the 3 positions, mark as manually edited
