@@ -216,8 +216,9 @@ const ReelInsightsScreen = () => {
   ]);
   const [editAccountsReached, setEditAccountsReached] = useState(ins?.accountsReached ?? 567);
   const [editFollows, setEditFollows] = useState(ins?.follows ?? 0);
-  const [monetisationStatus, setMonetisationStatus] = useState(post?.monetisationStatus || "Not monetising");
-  const [editTypicalViewRate, setEditTypicalViewRate] = useState(post?.typicalViewRate ?? 41.1);
+  const [monetisationStatus, setMonetisationStatus] = useState((post as any)?.monetisationStatus || "Not monetising");
+  const [editTypicalViewRate, setEditTypicalViewRate] = useState((post as any)?.typicalViewRate ?? 41.1);
+  const longPressTimerRef = useRef<any>(null);
 
   // ── Supabase: save all editable state ──────────────────────────────────────
   const saveToSupabase = useCallback(async (overrides?: Record<string, unknown>) => {
@@ -467,10 +468,13 @@ const ReelInsightsScreen = () => {
     reel.yCenter = editYCenter;
     reel.yTop = editYTop;
     reel.showGraph = showGraph;
+    if (postImage !== undefined) reel.thumbnail = postImage;
+    if (postCaption !== undefined) reel.caption = postCaption;
+    if (postVideoUrl !== undefined) reel.videoUrl = postVideoUrl;
     freshData[postIndex] = reel;
     saveReelsData(freshData);
     console.log("[InsightsPersist] Saved edits for reel", postIndex);
-  }, [isMainAccount, postIndex, editViews, editLikes, editComments, editShares, editSaves, editFollowerPct, editGenderMale, editViewRate, editStartDate, editDuration, editXDate1, editXDate2, editXDate3, customGraphData, editYCenter, editYTop, editSkipRate, editTypicalSkipRate, editRetentionCurve, editWatchTime, editAvgWatchTime, showGraph, editSources, editCountries, editAgeGroups, editAccountsReached, editFollows]);
+  }, [isMainAccount, postIndex, editViews, editLikes, editComments, editShares, editSaves, editFollowerPct, editGenderMale, editViewRate, editStartDate, editDuration, editXDate1, editXDate2, editXDate3, customGraphData, editYCenter, editYTop, editSkipRate, editTypicalSkipRate, editRetentionCurve, editWatchTime, editAvgWatchTime, showGraph, editSources, editCountries, editAgeGroups, editAccountsReached, editFollows, postImage, postCaption, postVideoUrl]);
 
   // Auto-persist edits to localStorage (skip initial mount)
   const hasMounted = useRef(false);
@@ -485,26 +489,25 @@ const ReelInsightsScreen = () => {
 
   const [loading, setLoading] = useState(true);
 
-  // Simulate brief loading like Instagram
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Hidden long-press listener for the whole page (2s)
   useEffect(() => {
-    let timer: any;
     const handleStart = (e: any) => {
-      // Don't trigger if clicking a button or input
       if (e.target.closest('button') || e.target.closest('input')) return;
-      
-      timer = setTimeout(() => {
+      longPressTimerRef.current = setTimeout(() => {
         setIsEditMode(prev => !prev);
+        toast.info(isEditMode ? "View mode" : "Edit mode active");
       }, 2000);
     };
-    const handleEnd = () => clearTimeout(timer);
-    
-    // Add only to the main div
+    const handleEnd = () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
+    };
     const main = document.getElementById('insights-main');
     if (main) {
       main.addEventListener('mousedown', handleStart);
@@ -516,9 +519,10 @@ const ReelInsightsScreen = () => {
         main.removeEventListener('mouseup', handleEnd);
         main.removeEventListener('touchstart', handleStart);
         main.removeEventListener('touchend', handleEnd);
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
       };
     }
-  }, []);
+  }, [isEditMode]);
 
   if (loading) {
     return (
@@ -543,19 +547,22 @@ const ReelInsightsScreen = () => {
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-background">
         <div className="flex items-center gap-5">
-          <button onClick={() => navigate('/profile')} className="text-foreground">
+          <button onClick={() => navigate('/profile')} className="text-foreground p-1">
             <ArrowLeft size={22} strokeWidth={1.8} />
           </button>
           <h1 className="text-[17px] font-semibold text-foreground">Reel insights</h1>
         </div>
         {!isEditMode ? (
-          <button className="text-foreground">
+          <button 
+            onClick={() => { setIsEditMode(true); toast.info("Edit mode active"); }}
+            className="p-1 px-2 rounded-lg bg-secondary/50 text-foreground active:opacity-60 transition-all border border-border/50"
+          >
             <MoreVertical size={20} />
           </button>
         ) : (
           <button 
-            onClick={() => { setIsEditMode(false); saveToSupabase(); persistEdits(); }}
-            className="text-[14px] font-bold text-[hsl(var(--ig-blue))]"
+            onClick={() => { setIsEditMode(false); saveToSupabase(); persistEdits(); toast.success("All changes saved"); }}
+            className="text-[14px] font-bold text-[hsl(var(--ig-blue))] p-1"
           >
             Done
           </button>
@@ -817,8 +824,9 @@ const ReelInsightsScreen = () => {
                         const centerVal = Math.round(editYCenter * r);
                         const topVal = Math.round(editYTop * r);
                         const yTicks = [0, centerVal, topVal];
-                        // Ensure domain top is at least the highest value + some padding to avoid clipping
-                        const yDomain = [0, (dataMax: number) => Math.max(dataMax, topVal) * 1.1];
+                        // Get max possible value from all relevant sources to prevent clipping
+                        const overallMax = Math.max(editViews * r, editTypicalTop * r, topVal);
+                        const yDomain = [0, Math.round(overallMax * 1.05)];
                         return (
                           <>
                             <CartesianGrid horizontal={false} vertical={false} />
