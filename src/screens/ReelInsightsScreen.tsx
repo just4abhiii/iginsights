@@ -378,10 +378,19 @@ const ReelInsightsScreen = () => {
 
   const viewsOverTimeAll = useMemo(() => {
     if (customGraphData) {
-      // Override day labels with effective labels
+      // Calculate current max values in the custom drawn data
+      const maxThisReel = Math.max(...customGraphData.map(d => d.thisReel), 1);
+      const maxTypical = Math.max(...customGraphData.map(d => d.typical), 1);
+      
       const labeled = customGraphData.map((d, i) => {
         const labelIdx = i === 0 ? 0 : i === 2 ? 1 : i === 4 ? 2 : -1;
-        return { ...d, day: labelIdx >= 0 ? effectiveXLabels[labelIdx] : "" };
+        return { 
+          ...d, 
+          day: labelIdx >= 0 ? effectiveXLabels[labelIdx] : "",
+          // Automatically scale drawing to exactly match current editViews and editTypicalTop!
+          thisReel: Math.round((d.thisReel / maxThisReel) * editViews),
+          typical: Math.round((d.typical / maxTypical) * editTypicalTop)
+        };
       });
       return labeled;
     }
@@ -1424,29 +1433,7 @@ const ReelInsightsScreen = () => {
                     </button>
                   </div>
                   <p className="text-[10px] text-muted-foreground -mt-3 mb-3">Toggle off to hide the Views over time graph</p>
-                  {/* Quick value editors */}
-                  <div className="flex gap-2 mb-3">
-                    <div className="flex-1">
-                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Peak (center)</label>
-                      <input
-                        value={editViews}
-                        onChange={(e) => { setEditViews(Math.max(0, parseInt(e.target.value) || 0)); setCustomGraphData(null); }}
-                        type="number"
-                        min="0"
-                        className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Typical (top)</label>
-                      <input
-                        value={editTypicalTop}
-                        onChange={(e) => { setEditTypicalTop(Math.max(0, parseInt(e.target.value) || 0)); setCustomGraphData(null); }}
-                        type="number"
-                        min="0"
-                        className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
-                      />
-                    </div>
-                  </div>
+
                   {/* Time Range Mode */}
                   <div className="mb-3">
                     <label className="text-[10px] text-muted-foreground mb-1 block">Time Range</label>
