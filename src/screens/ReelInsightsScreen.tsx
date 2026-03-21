@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as React from "react";
 
-import { ArrowLeft, MoreVertical, Heart, MessageCircle, Send, Bookmark, Repeat2, Info, Pencil, X } from "lucide-react";
+import { ArrowLeft, MoreVertical, Heart, MessageCircle, Send, Bookmark, Repeat2, Info, Pencil, X, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import { mockAccounts, currentUser } from "@/data/mockData";
 import { loadReelsData, saveReelsData } from "@/data/reelInsightsData";
@@ -215,6 +216,8 @@ const ReelInsightsScreen = () => {
   ]);
   const [editAccountsReached, setEditAccountsReached] = useState(ins?.accountsReached ?? 567);
   const [editFollows, setEditFollows] = useState(ins?.follows ?? 0);
+  const [monetisationStatus, setMonetisationStatus] = useState(post?.monetisationStatus || "Not monetising");
+  const [editTypicalViewRate, setEditTypicalViewRate] = useState(post?.typicalViewRate ?? 41.1);
 
   // ── Supabase: save all editable state ──────────────────────────────────────
   const saveToSupabase = useCallback(async (overrides?: Record<string, unknown>) => {
@@ -223,6 +226,8 @@ const ReelInsightsScreen = () => {
       shares: editShares, saves: editSaves,
       followerViewsPct: editFollowerPct, genderMale: editGenderMale,
       viewRatePast3Sec: editViewRate,
+      typicalViewRate: editTypicalViewRate,
+      monetisationStatus,
       graphStartDate: editStartDate, displayDate: editDisplayDate,
       duration: editDuration,
       watchTime: editWatchTime, avgWatchTime: editAvgWatchTime,
@@ -240,6 +245,9 @@ const ReelInsightsScreen = () => {
       ageGroups: editAgeGroups,
       accountsReached: editAccountsReached,
       follows: editFollows,
+      thumbnail: postImage,
+      videoUrl: postVideoUrl,
+      caption: postCaption,
       ...overrides,
     };
     await (supabase as any).from('reels_data').upsert(
@@ -284,6 +292,8 @@ const ReelInsightsScreen = () => {
       if (d.avgWatchTime) setEditAvgWatchTime(d.avgWatchTime as string);
       if (d.skipRate != null) setEditSkipRate(d.skipRate as number);
       if (d.typicalSkipRate != null) setEditTypicalSkipRate(d.typicalSkipRate as number);
+      if (d.typicalViewRate != null) setEditTypicalViewRate(d.typicalViewRate as number);
+      if (d.monetisationStatus && typeof d.monetisationStatus === 'string') setMonetisationStatus(d.monetisationStatus);
       if (d.retentionCurve) setEditRetentionCurve(d.retentionCurve as { t: string; pct: number }[]);
       if (d.typicalRetentionCurve) setTypicalRetentionCurve(d.typicalRetentionCurve as { t: string; pct: number }[]);
       if (d.customGraphData) setCustomGraphData(d.customGraphData as { day: string; thisReel: number; typical: number }[]);
@@ -554,43 +564,59 @@ const ReelInsightsScreen = () => {
 
       {/* Reel Preview */}
       <div className="flex flex-col items-center py-4 px-4">
-        <div className="w-[100px] rounded-lg overflow-hidden shadow-lg relative">
+        <div 
+          className={cn("w-[100px] rounded-lg overflow-hidden shadow-lg relative", isEditMode && "cursor-pointer active:opacity-60")}
+          onClick={() => isEditMode && setEditModal({
+            label: "Thumbnail URL",
+            value: postImage,
+            isText: true,
+            onSave: ((v: string) => { setPostImage(v); persistEdits(); }) as any
+          })}
+        >
           <img src={postImage} alt="Reel thumbnail" className="w-full aspect-[9/16] object-cover" />
-
+          {isEditMode && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <Plus size={24} className="text-white drop-shadow-lg" />
+            </div>
+          )}
         </div>
-        <p className="mt-3 text-[13px] text-foreground text-center leading-[18px] whitespace-pre-wrap break-words w-full px-2">{postCaption}</p>
+        <p 
+          className={cn("mt-3 text-[13px] text-foreground text-center leading-[18px] whitespace-pre-wrap break-words w-full px-2", isEditMode && "cursor-pointer active:bg-secondary/40 rounded py-1")}
+          onClick={() => isEditMode && setEditModal({
+            label: "Caption",
+            value: postCaption,
+            isText: true,
+            onSave: ((v: string) => { setPostCaption(v); persistEdits(); }) as any
+          })}
+        >{postCaption}</p>
         <p
-          className="text-[12px] text-muted-foreground mt-2.5 cursor-pointer active:opacity-60"
-          onClick={() => {
-            setEditModal({
-              label: "Date & Duration (e.g. 5 February · Duration 0:10)",
-              value: `${editDisplayDate} · Duration ${editDuration}`,
-              onSave: ((v: any) => {
-                const str = String(v).trim();
-                // Try multiple separator patterns: · or . or - or just space before Duration
-                const match = str.match(/^(.+?)\s*[·.\-]\s*Duration\s+(.+)$/i)
-                  || str.match(/^(.+?)\s+Duration\s+(.+)$/i);
-                const dateStr = match ? match[1].trim() : str;
-                setEditDisplayDate(dateStr);
-                if (match) {
-                  setEditDuration(match[2].trim());
-                }
-                // Convert date to short format for graph
-                const monthMap: Record<string, string> = { January: "Jan", February: "Feb", March: "Mar", April: "Apr", May: "May", June: "Jun", July: "Jul", August: "Aug", September: "Sep", October: "Oct", November: "Nov", December: "Dec" };
-                const dm = dateStr.match(/^(\d{1,2})\s+(\w+)$/);
-                if (dm) {
-                  const shortMonth = monthMap[dm[2]] || dm[2].slice(0, 3);
-                  const newStart = `${dm[1]} ${shortMonth}`;
-                  setEditStartDate(newStart);
-                  // Directly compute and set all 3 X-axis dates
-                  const newDates = computeXDates(newStart);
-                  setEditXDate1(newDates[0]);
-                  setEditXDate2(newDates[1]);
-                  setEditXDate3(newDates[2]);
-                }
-              }) as any,
-            });
-          }}
+          className={cn("text-[12px] text-muted-foreground mt-2.5 cursor-pointer active:opacity-60", isEditMode && "bg-secondary/40 px-2 py-0.5 rounded")}
+          onClick={() => isEditMode && setEditModal({
+            label: "Date & Duration (e.g. 5 February · Duration 0:10)",
+            value: `${editDisplayDate} · Duration ${editDuration}`,
+            onSave: ((v: any) => {
+              const str = String(v).trim();
+              const match = str.match(/^(.+?)\s*[·.\-]\s*Duration\s+(.+)$/i)
+                || str.match(/^(.+?)\s+Duration\s+(.+)$/i);
+              const dateStr = match ? match[1].trim() : str;
+              setEditDisplayDate(dateStr);
+              if (match) {
+                setEditDuration(match[2].trim());
+              }
+              const monthMap: Record<string, string> = { January: "Jan", February: "Feb", March: "Mar", April: "Apr", May: "May", June: "Jun", July: "Jul", August: "Aug", September: "Sep", October: "Oct", November: "Nov", December: "Dec" };
+              const dm = dateStr.match(/^(\d{1,2})\s+(\w+)$/);
+              if (dm) {
+                const shortMonth = monthMap[dm[2]] || dm[2].slice(0, 3);
+                const newStart = `${dm[1]} ${shortMonth}`;
+                setEditStartDate(newStart);
+                const newDates = computeXDates(newStart);
+                setEditXDate1(newDates[0]);
+                setEditXDate2(newDates[1]);
+                setEditXDate3(newDates[2]);
+              }
+              persistEdits();
+            }) as any,
+          })}
         >
           {editDisplayDate} · Duration {editDuration}
         </p>
@@ -778,7 +804,7 @@ const ReelInsightsScreen = () => {
               {[viewsOverTimeAll, viewsOverTimeFollowers, viewsOverTimeNonFollowers].map((data, gi) => (
                 <div key={gi} className="h-full" style={{ width: `${100 / 3}%` }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 5, right: 5, left: -5, bottom: 0 }}>
+                    <AreaChart data={data} margin={{ top: 20, right: 10, left: -5, bottom: 0 }}>
                       <defs>
                         <linearGradient id={`reelGrad${gi}`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#E040FB" stopOpacity={0.1} />
@@ -791,12 +817,30 @@ const ReelInsightsScreen = () => {
                         const centerVal = Math.round(editYCenter * r);
                         const topVal = Math.round(editYTop * r);
                         const yTicks = [0, centerVal, topVal];
-                        const yDomain = [0, topVal];
+                        // Ensure domain top is at least the highest value + some padding to avoid clipping
+                        const yDomain = [0, (dataMax: number) => Math.max(dataMax, topVal) * 1.1];
                         return (
                           <>
                             <CartesianGrid horizontal={false} vertical={false} />
                             <XAxis dataKey="day" fontSize={11} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                            <YAxis fontSize={11} tickLine={false} axisLine={false} width={40} allowDataOverflow={true} tick={{ fill: 'hsl(var(--muted-foreground))' }} domain={yDomain} ticks={yTicks} tickCount={3} tickFormatter={(v: number) => { if (v === 0) return '0'; if (v >= 1000) { const k = v / 1000; return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`; } return String(v); }} />
+                            <YAxis 
+                              fontSize={11} 
+                              tickLine={false} 
+                              axisLine={false} 
+                              width={40} 
+                              tick={{ fill: 'hsl(var(--muted-foreground))' }} 
+                              domain={yDomain} 
+                              ticks={yTicks} 
+                              tickCount={3} 
+                              tickFormatter={(v: number) => { 
+                                if (v === 0) return '0'; 
+                                if (v >= 1000) { 
+                                  const k = v / 1000; 
+                                  return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`; 
+                                } 
+                                return String(v); 
+                              }} 
+                            />
                             <ReferenceLine y={0} stroke="hsl(var(--border))" strokeOpacity={0.4} />
                             <ReferenceLine y={centerVal} stroke="hsl(var(--border))" strokeOpacity={0.4} />
                             <ReferenceLine y={topVal} stroke="hsl(var(--border))" strokeOpacity={0.4} />
@@ -812,11 +856,21 @@ const ReelInsightsScreen = () => {
             </div>
           </div>
           <div className="flex items-center justify-center gap-6 mt-2">
-            <div className="flex items-center gap-1.5">
+            <div 
+              className={cn("flex items-center gap-1.5", isEditMode && "cursor-pointer active:opacity-60")}
+              onClick={() => isEditMode && setEditModal({ label: "This Reel Views", value: String(editViews), onSave: setEditViews })}
+            >
               <div className="h-2 w-2 rounded-full bg-[#E040FB]" />
               <span className="text-[12px] text-muted-foreground">This reel</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div 
+              className={cn("flex items-center gap-1.5", isEditMode && "cursor-pointer active:opacity-60")}
+              onClick={() => isEditMode && setEditModal({ 
+                label: "Typical Reel Views (Peak)", 
+                value: String(editTypicalTop), 
+                onSave: (v) => { setEditTypicalTop(v); saveToSupabase({ editTypicalTop: v }); setCustomGraphData(null); } 
+              })}
+            >
               <div className="h-2 w-2 rounded-full bg-[#9CA3AF]" />
               <span className="text-[12px] text-muted-foreground">Your typical reel views</span>
             </div>
@@ -1085,12 +1139,25 @@ const ReelInsightsScreen = () => {
           </div>
           <span className="text-[13px] text-foreground">{viewRate.toFixed(1)}%</span>
         </div>
-        <div className="flex items-center justify-between mt-1">
+        <div 
+          className={cn("flex items-center justify-between mt-1", isEditMode && "cursor-pointer active:opacity-60")}
+          onClick={() => isEditMode && setEditModal({
+            label: "Typical View Rate (%)",
+            value: "41.1",
+            onSave: (v) => {
+              // Note: Normally this would be a local state, but since we're using static values for típical, 
+              // we just save the intent to edit what should be a constant.
+              // For robustness, we'll use a local state for Typical View Rate too.
+              setEditTypicalViewRate(v);
+              persistEdits();
+            }
+          })}
+        >
           <div className="flex items-center gap-1.5">
             <div className="h-2 w-2 rounded-full bg-[#9CA3AF]" />
             <span className="text-[13px] text-muted-foreground">Your typical reel</span>
           </div>
-          <span className="text-[13px] text-foreground">41.1%</span>
+          <span className="text-[13px] text-foreground">{editTypicalViewRate.toFixed(1)}%</span>
         </div>
       </div>
 
@@ -1331,12 +1398,20 @@ const ReelInsightsScreen = () => {
           <Info size={16} className="text-muted-foreground" />
         </div>
         <h4 className="text-[15px] font-bold text-foreground mb-2">Gifts</h4>
-        <div className="flex items-center justify-between">
+        <div 
+          className={cn("flex items-center justify-between", isEditMode && "cursor-pointer active:opacity-60")}
+          onClick={() => isEditMode && setEditModal({
+            label: "Monetisation Status",
+            value: monetisationStatus,
+            isText: true,
+            onSave: ((v: string) => { setMonetisationStatus(v); persistEdits(); }) as any
+          })}
+        >
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-[#E040FB]" />
-            <span className="text-[14px] text-foreground">Not monetising</span>
+            <span className="text-[14px] text-foreground">{monetisationStatus}</span>
           </div>
-          <button className="text-[14px] text-[#0095f6] font-medium">Add payment details</button>
+          <button className="text-[14px] text-[#0095f6] font-medium" onClick={(e) => { e.stopPropagation(); toast.success("Feature coming soon!"); }}>{monetisationStatus.includes("Not") ? "Add payment details" : "View settings"}</button>
         </div>
       </div>
 
