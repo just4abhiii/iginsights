@@ -343,18 +343,6 @@ const ReelInsightsScreen = () => {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggered = useRef(false);
 
-  const startLongPress = useCallback((label: string, currentValue: number, onSave: (v: number) => void) => {
-    longPressTriggered.current = false;
-    longPressTimer.current = setTimeout(() => {
-      longPressTriggered.current = true;
-      setEditModal({ label, value: String(currentValue), onSave });
-    }, 800);
-  }, []);
-
-  const endLongPress = useCallback(() => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  }, []);
-
   // Use editable values
   const views = editViews;
   const likes = editLikes;
@@ -735,14 +723,8 @@ const ReelInsightsScreen = () => {
                 strokeLinecap="round" />
             </svg>
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer select-none"
-              onContextMenu={(e) => e.preventDefault()}
-              onTouchStart={() => startLongPress("Views", views, setEditViews)}
-              onTouchEnd={endLongPress}
-              onTouchCancel={endLongPress}
-              onMouseDown={() => startLongPress("Views", views, setEditViews)}
-              onMouseUp={endLongPress}
-              onMouseLeave={endLongPress}
+              className={cn("absolute inset-0 flex flex-col items-center justify-center", isEditMode && "cursor-pointer active:bg-secondary/20 rounded-full transition-colors")}
+              onClick={() => isEditMode && setEditModal({ label: "Views", value: String(views), onSave: setEditViews })}
             >
               <span className="text-[13px] text-muted-foreground">Views</span>
               <span className="text-[32px] font-bold text-foreground">{fmtNum(views)}</span>
@@ -751,14 +733,8 @@ const ReelInsightsScreen = () => {
         </div>
         <div className="space-y-2 mt-2">
           <div
-            className="flex items-center justify-between cursor-pointer select-none"
-            onContextMenu={(e) => e.preventDefault()}
-            onTouchStart={() => startLongPress("Followers %", followerPct, (v) => setEditFollowerPct(Math.min(100, v)))}
-            onTouchEnd={endLongPress}
-            onTouchCancel={endLongPress}
-            onMouseDown={() => startLongPress("Followers %", followerPct, (v) => setEditFollowerPct(Math.min(100, v)))}
-            onMouseUp={endLongPress}
-            onMouseLeave={endLongPress}
+            className={cn("flex items-center justify-between", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] py-1 transition-colors")}
+            onClick={() => isEditMode && setEditModal({ label: "Followers %", value: String(followerPct), onSave: (v) => setEditFollowerPct(Math.min(100, v)) })}
           >
             <div className="flex items-center gap-2">
               <div className="h-2.5 w-2.5 rounded-full bg-[#E040FB]" />
@@ -895,7 +871,7 @@ const ReelInsightsScreen = () => {
           {sources.map((item, idx) => (
             <div key={idx}>
               <span
-                className="text-[11px] text-foreground block mb-1 cursor-pointer select-none active:opacity-60"
+                className={cn("text-[11px] text-foreground block mb-1 select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                 onClick={() => {
                   setEditModal({
                     label: `Source name #${idx + 1}`,
@@ -914,8 +890,9 @@ const ReelInsightsScreen = () => {
                   <div className="h-full ig-bar-gradient" style={{ width: `${item.pct}%` }} />
                 </div>
                 <span
-                  className="text-[11px] text-foreground w-[36px] text-right cursor-pointer select-none active:opacity-60"
+                  className={cn("text-[11px] text-foreground w-[36px] text-right select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                   onClick={() => {
+                    if (!isEditMode) return;
                     setEditModal({
                       label: `${item.name} %`,
                       value: String(item.pct),
@@ -933,14 +910,8 @@ const ReelInsightsScreen = () => {
           ))}
         </div>
         <div
-          className="border-t border-border mt-5 pt-4 flex items-center justify-between cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => startLongPress("Accounts reached", accountsReached, setEditAccountsReached)}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => startLongPress("Accounts reached", accountsReached, setEditAccountsReached)}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className={cn("border-t border-border mt-5 pt-4 flex items-center justify-between", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] transition-colors")}
+          onClick={() => isEditMode && setEditModal({ label: "Accounts reached", value: String(accountsReached), onSave: setEditAccountsReached })}
         >
           <span className="text-[14px] text-foreground">Accounts reached</span>
           <span className="text-[14px] text-foreground">{fmtNum(accountsReached)}</span>
@@ -1014,27 +985,15 @@ const ReelInsightsScreen = () => {
         {/* Skip rate */}
         <h4 className="text-[15px] font-bold text-foreground mb-3">Skip rate</h4>
         <div
-          className="flex items-center justify-between py-1 cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => startLongPress("This reel's skip rate (%)", editSkipRate, (v) => setEditSkipRate(Math.min(100, v)))}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => startLongPress("This reel's skip rate (%)", editSkipRate, (v) => setEditSkipRate(Math.min(100, v)))}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className={cn("flex items-center justify-between py-1", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] transition-colors")}
+          onClick={() => isEditMode && setEditModal({ label: "This reel's skip rate (%)", value: String(editSkipRate), onSave: (v) => setEditSkipRate(Math.min(100, v)) })}
         >
           <span className="text-[14px] text-foreground">This reel's skip rate</span>
           <span className="text-[14px] text-foreground">{editSkipRate.toFixed(1)}%</span>
         </div>
         <div
-          className="flex items-center justify-between py-1 cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => startLongPress("Your typical skip rate (%)", editTypicalSkipRate, (v) => setEditTypicalSkipRate(Math.min(100, v)))}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => startLongPress("Your typical skip rate (%)", editTypicalSkipRate, (v) => setEditTypicalSkipRate(Math.min(100, v)))}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className={cn("flex items-center justify-between py-1", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] transition-colors")}
+          onClick={() => isEditMode && setEditModal({ label: "Your typical skip rate (%)", value: String(editTypicalSkipRate), onSave: (v) => setEditTypicalSkipRate(Math.min(100, v)) })}
         >
           <span className="text-[14px] text-foreground">Your typical skip rate</span>
           <span className="text-[14px] text-foreground">{editTypicalSkipRate.toFixed(1)}%</span>
@@ -1045,71 +1004,15 @@ const ReelInsightsScreen = () => {
 
         {/* Watch time rows */}
         <div
-          className="flex items-center justify-between py-1 cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setEditModal({
-                label: "Watch time (e.g. 4h 49m 17s)",
-                value: editWatchTime,
-                isText: true,
-                onSave: ((v: any) => setEditWatchTime(String(v))) as any,
-              });
-            }, 800);
-          }}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setEditModal({
-                label: "Watch time (e.g. 4h 49m 17s)",
-                value: editWatchTime,
-                isText: true,
-                onSave: ((v: any) => setEditWatchTime(String(v))) as any,
-              });
-            }, 800);
-          }}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className={cn("flex items-center justify-between py-1", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] transition-colors")}
+          onClick={() => isEditMode && setEditModal({ label: "Watch time (e.g. 4h 49m 17s)", value: editWatchTime, isText: true, onSave: ((v: any) => setEditWatchTime(String(v))) as any })}
         >
           <span className="text-[14px] text-foreground">Watch time</span>
           <span className="text-[14px] text-foreground">{watchTime}</span>
         </div>
         <div
-          className="flex items-center justify-between py-1 cursor-pointer select-none"
-          onContextMenu={(e) => e.preventDefault()}
-          onTouchStart={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setEditModal({
-                label: "Average watch time (e.g. 10 sec)",
-                value: editAvgWatchTime,
-                isText: true,
-                onSave: ((v: any) => setEditAvgWatchTime(String(v))) as any,
-              });
-            }, 800);
-          }}
-          onTouchEnd={endLongPress}
-          onTouchCancel={endLongPress}
-          onMouseDown={() => {
-            longPressTriggered.current = false;
-            longPressTimer.current = setTimeout(() => {
-              longPressTriggered.current = true;
-              setEditModal({
-                label: "Average watch time (e.g. 10 sec)",
-                value: editAvgWatchTime,
-                isText: true,
-                onSave: ((v: any) => setEditAvgWatchTime(String(v))) as any,
-              });
-            }, 800);
-          }}
-          onMouseUp={endLongPress}
-          onMouseLeave={endLongPress}
+          className={cn("flex items-center justify-between py-1", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] transition-colors")}
+          onClick={() => isEditMode && setEditModal({ label: "Average watch time (e.g. 10 sec)", value: editAvgWatchTime, isText: true, onSave: ((v: any) => setEditAvgWatchTime(String(v))) as any })}
         >
           <span className="text-[14px] text-foreground">Average watch time</span>
           <span className="text-[14px] text-foreground">{avgWatchTime}</span>
@@ -1190,14 +1093,8 @@ const ReelInsightsScreen = () => {
                 strokeLinecap="round" />
             </svg>
             <div
-              className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer select-none"
-              onContextMenu={(e) => e.preventDefault()}
-              onTouchStart={() => startLongPress("Interactions", totalInteractions, (v) => setEditInteractions(v))}
-              onTouchEnd={endLongPress}
-              onTouchCancel={endLongPress}
-              onMouseDown={() => startLongPress("Interactions", totalInteractions, (v) => setEditInteractions(v))}
-              onMouseUp={endLongPress}
-              onMouseLeave={endLongPress}
+              className={cn("absolute inset-0 flex flex-col items-center justify-center", isEditMode && "cursor-pointer active:bg-secondary/20 rounded-full transition-colors")}
+              onClick={() => isEditMode && setEditModal({ label: "Interactions", value: String(totalInteractions), onSave: setEditInteractions })}
             >
               <span className="text-[13px] text-muted-foreground">Interactions</span>
               <span className="text-[32px] font-bold text-foreground">{fmtNum(totalInteractions)}</span>
@@ -1228,14 +1125,17 @@ const ReelInsightsScreen = () => {
       <div className="px-4 py-5">
         <div className="space-y-3">
           {[
-            { label: "Likes", value: fmtNum(likes) },
-            { label: "Shares", value: fmtNum(shares) },
-            { label: "Saves", value: fmtNum(saves) },
-            { label: "Comments", value: fmtNum(comments) },
+            { label: "Likes", value: likes, set: setEditLikes },
+            { label: "Shares", value: shares, set: setEditShares },
+            { label: "Saves", value: saves, set: setEditSaves },
+            { label: "Comments", value: comments, set: setEditComments },
           ].map((item) => (
-            <div key={item.label} className="flex items-center justify-between">
+            <div key={item.label} 
+              className={cn("flex items-center justify-between", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] py-1 transition-colors")}
+              onClick={() => isEditMode && setEditModal({ label: item.label, value: String(item.value), onSave: item.set })}
+            >
               <span className="text-[15px] text-foreground">{item.label}</span>
-              <span className="text-[15px] text-foreground">{item.value}</span>
+              <span className="text-[15px] text-foreground">{fmtNum(item.value)}</span>
             </div>
           ))}
         </div>
@@ -1246,7 +1146,7 @@ const ReelInsightsScreen = () => {
       {/* Profile activity */}
       <div className="px-4 py-5">
         <div
-          className="flex items-center justify-between mb-3 cursor-pointer select-none"
+          className={cn("flex items-center justify-between mb-3", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] py-1 transition-colors")}
           onClick={() => isEditMode && setEditModal({ label: "Follows", value: String(follows), onSave: setEditFollows })}
         >
           <div className="flex items-center gap-2">
@@ -1256,7 +1156,7 @@ const ReelInsightsScreen = () => {
           <span className="text-[16px] font-bold text-foreground">{follows}</span>
         </div>
         <div 
-          className="flex items-center justify-between cursor-pointer"
+          className={cn("flex items-center justify-between", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-2 relative -left-2 w-[calc(100%+16px)] py-1 transition-colors")}
           onClick={() => isEditMode && setEditModal({ label: "Follows", value: String(follows), onSave: setEditFollows })}
         >
           <span className="text-[14px] text-foreground">Follows</span>
@@ -1313,8 +1213,9 @@ const ReelInsightsScreen = () => {
             {countries.map((c, idx) => (
               <div key={idx}>
                 <span
-                  className="text-[11px] text-foreground block mb-1 cursor-pointer select-none active:opacity-60"
+                  className={cn("text-[11px] text-foreground block mb-1 select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                   onClick={() => {
+                    if (!isEditMode) return;
                     setEditModal({
                       label: `Country name #${idx + 1}`,
                       value: c.name,
@@ -1332,8 +1233,9 @@ const ReelInsightsScreen = () => {
                     <div className="h-full ig-bar-gradient" style={{ width: `${c.pct}%` }} />
                   </div>
                   <span
-                    className="text-[11px] text-foreground w-[36px] text-right cursor-pointer select-none active:opacity-60"
+                    className={cn("text-[11px] text-foreground w-[36px] text-right select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                     onClick={() => {
+                      if (!isEditMode) return;
                       setEditModal({
                         label: `${c.name} %`,
                         value: String(c.pct),
@@ -1357,8 +1259,9 @@ const ReelInsightsScreen = () => {
             {ageGroups.map((a, idx) => (
               <div key={idx}>
                 <span
-                  className="text-[14px] text-foreground block mb-0.5 cursor-pointer select-none active:opacity-60"
+                  className={cn("text-[14px] text-foreground block mb-0.5 select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                   onClick={() => {
+                    if (!isEditMode) return;
                     setEditModal({
                       label: `Age range #${idx + 1}`,
                       value: a.range,
@@ -1376,8 +1279,9 @@ const ReelInsightsScreen = () => {
                     <div className="h-full ig-bar-gradient" style={{ width: `${a.pct}%` }} />
                   </div>
                   <span
-                    className="text-[14px] text-foreground w-[48px] text-right cursor-pointer select-none active:opacity-60"
+                    className={cn("text-[14px] text-foreground w-[48px] text-right select-none", isEditMode && "cursor-pointer active:bg-secondary/20 rounded px-1 -ml-1 transition-colors")}
                     onClick={() => {
+                      if (!isEditMode) return;
                       setEditModal({
                         label: `${a.range} %`,
                         value: String(a.pct),
