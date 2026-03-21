@@ -270,14 +270,15 @@ export const exploreImages = [
 ];
 
 export const currentUser: UserProfile = {
-  username: "just4abhii",
-  fullName: "⚡ ABHI ⚡",
+  username: "Organicsmm.pro",
+  fullName: "OrganicSMM",
   avatar: "https://i.pravatar.cc/150?img=33",
-  bio: "Turning raw content into high retention viral clips. Fast edits, clean cuts, optimized for Shorts, Reels & Tik Tok. Growing creators one clip at a time",
+  bio: "ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ᴄʀᴇᴀᴛᴏʀ ᴛᴏᴏʟ 🛠️\nᴄᴜꜱᴛᴏᴍɪᴢᴇ ʏᴏᴜʀ ɪɢ ᴀɴᴀʟʏᴛɪᴄꜱ 📊\nɢʟᴏʙᴀʟ ʀᴇᴀᴄʜ ꜱɪᴍᴜʟᴀᴛᴏʀ 🌍\n👇 ᴄʜᴀɴɢᴇ ʏᴏᴜʀ ꜱᴛᴀᴛꜱ ᴛᴏᴅᴀʏ",
   posts: 21,
-  followers: 1253,
+  followers: 12530,
   following: 12,
-  isVerified: false,
+  isVerified: true,
+  website: "Organicsmm.pro",
 };
 
 export const userPostImages = [
@@ -471,13 +472,13 @@ export const mockAccounts: Record<string, MockAccount> = {
       { thumbnail: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=300&h=300&fit=crop" },
     ],
     highlights: [
-      { name: "🔥 Attitude", image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop" },
-      { name: "👑 King", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
-      { name: "💀 Dark", image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" },
+      { name: "🔥 Viral", image: "https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=100&h=100&fit=crop" },
+      { name: "💻 Tools", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop" },
+      { name: "📈 Results", image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" },
     ],
-    storyNote: "Don't test my patience 💀",
-    category: "Dancer",
-    channelText: "🔥 ABHI GANG 50K members",
+    storyNote: "New Dashboard Features Live 🔥",
+    category: "Software/App",
+    channelText: "🚀 OrganicSMM Updates 10K members",
     dashboardViews: "98.5M",
   },
 };
