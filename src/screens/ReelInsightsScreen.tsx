@@ -11,6 +11,7 @@ import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Refe
 import GraphEditorModal from "@/components/GraphEditorModal";
 import RetentionEditorModal from "@/components/RetentionEditorModal";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 // Seeded pseudo-random number generator
 const seededRandom = (seed: number) => {
@@ -21,28 +22,18 @@ const seededRandom = (seed: number) => {
   };
 };
 
-// Generate nice Y-axis ticks like Instagram: for ~1K → [0, 500, 1K], for ~25K → [0, 15K, 30K]
-const getInstagramYTicks = (maxVal: number): number[] => {
-  if (maxVal <= 0) return [0];
-  // Find a nice "step" so we get 2-3 ticks above 0
-  const rawStep = maxVal / 2;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-  const niceSteps = [1, 2, 2.5, 5, 10];
-  let step = magnitude;
-  for (const ns of niceSteps) {
-    if (ns * magnitude >= rawStep) { step = ns * magnitude; break; }
-  }
-  const ticks = [0];
-  let t = step;
-  while (t <= maxVal * 1.3) {
-    ticks.push(t);
-    t += step;
-  }
-  // Keep only 2-3 ticks above 0
-  if (ticks.length > 4) {
-    return getInstagramYTicks(maxVal * 1.1);
-  }
-  return ticks;
+// Auto-calculate the next nice Y-axis interval (Instagram style: steps of 1, 2, 2.5, 5, 10)
+const getNiceTopValue = (val: number) => {
+  if (val <= 0) return 100;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(val)));
+  const norm = val / magnitude;
+  let nextNorm;
+  if (norm <= 1) nextNorm = 1;
+  else if (norm <= 2) nextNorm = 2;
+  else if (norm <= 2.5) nextNorm = 2.5;
+  else if (norm <= 5) nextNorm = 5;
+  else nextNorm = 10;
+  return nextNorm * magnitude;
 };
 
 // Generate graph: pink line peaks at center (bell curve), gray line flat at top
@@ -129,6 +120,7 @@ const ReelInsightsScreen = () => {
   const [postImage, setPostImage] = useState(getPostImage());
   const [postVideoUrl, setPostVideoUrl] = useState(post?.videoUrl || "");
   const [postCaption, setPostCaption] = useState(post?.caption || "❤️🤍...");
+  const [retentionImageUrl, setRetentionImageUrl] = useState<string>('');
 
   // Get insights data
   const ins = post?.insights || null;
@@ -249,6 +241,7 @@ const ReelInsightsScreen = () => {
       thumbnail: postImage,
       videoUrl: postVideoUrl,
       caption: postCaption,
+      retentionImage: retentionImageUrl,
       ...overrides,
     };
     try {
@@ -319,6 +312,7 @@ const ReelInsightsScreen = () => {
         if (d.thumbnail) setPostImage(d.thumbnail as string);
         if (d.videoUrl) setPostVideoUrl(d.videoUrl as string);
         if (d.caption) setPostCaption(d.caption as string);
+        if (d.retentionImage) setRetentionImageUrl(d.retentionImage as string);
       } catch (e) {
         console.warn('[Supabase] Load failed, using localStorage data:', e);
       }
@@ -550,9 +544,9 @@ const ReelInsightsScreen = () => {
         {!isEditMode ? (
           <button 
             onClick={() => { setIsEditMode(true); toast.info("Edit mode active"); }}
-            className="p-1 px-2 rounded-lg bg-secondary/50 text-foreground active:opacity-60 transition-all border border-border/50"
+            className="p-1 text-foreground active:opacity-60"
           >
-            <MoreVertical size={20} />
+            <MoreVertical size={21} />
           </button>
         ) : (
           <button 
@@ -566,22 +560,36 @@ const ReelInsightsScreen = () => {
 
       {/* Reel Preview */}
       <div className="flex flex-col items-center py-4 px-4">
-        <div 
-          className={cn("w-[100px] rounded-lg overflow-hidden shadow-lg relative", isEditMode && "cursor-pointer active:opacity-60")}
-          onClick={() => isEditMode && setEditModal({
-            label: "Thumbnail URL",
-            value: postImage,
-            isText: true,
-            onSave: ((v: string) => { setPostImage(v); persistEdits(); }) as any
-          })}
+        <label 
+          className={cn("w-[100px] rounded-lg overflow-hidden shadow-lg relative block", isEditMode && "cursor-pointer active:opacity-60")}
         >
+          {isEditMode && (
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const tid = toast.loading("Uploading thumbnail...");
+                try {
+                  const url = await uploadToCloudinary(file);
+                  setPostImage(url);
+                  saveToSupabase({ thumbnail: url });
+                  toast.success("Thumbnail updated!", { id: tid });
+                } catch (err) {
+                  toast.error("Upload failed", { id: tid });
+                }
+              }} 
+            />
+          )}
           <img src={postImage} alt="Reel thumbnail" className="w-full aspect-[9/16] object-cover" />
           {isEditMode && (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
               <Plus size={24} className="text-white drop-shadow-lg" />
             </div>
           )}
-        </div>
+        </label>
         <p 
           className={cn("mt-3 text-[13px] text-foreground text-center leading-[18px] whitespace-pre-wrap break-words w-full px-2", isEditMode && "cursor-pointer active:bg-secondary/40 rounded py-1")}
           onClick={() => isEditMode && setEditModal({
@@ -804,8 +812,9 @@ const ReelInsightsScreen = () => {
                       {(() => {
                         const ratios = [1, followerPct / 100, nonFollowerPct / 100];
                         const r = ratios[gi];
-                        const topVal = Math.round(editYTop * r);
-                        const centerVal = Math.round(topVal / 2);
+                        const overallMax = Math.max(Math.max(...data.map(d => d.thisReel)) * r, Math.max(...data.map(d => d.typical)) * r, 100);
+                        const topVal = getNiceTopValue(overallMax);
+                        const centerVal = topVal / 2;
                         const yTicks = [0, centerVal, topVal];
                         // Domain max = topVal so reference lines space evenly: 0 (bottom), center (middle), top (top)
                         const yDomain: [number, number] = [0, topVal];
@@ -946,9 +955,39 @@ const ReelInsightsScreen = () => {
       {/* ── Retention ── */}
       <div className="px-4 py-5">
         {/* Header */}
-        <div className="flex items-center gap-2 mb-5">
-          <h3 className="text-[16px] font-bold text-foreground">Retention</h3>
-          <Info size={14} className="text-muted-foreground" />
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <h3 className="text-[16px] font-bold text-foreground">Retention</h3>
+            <Info size={14} className="text-muted-foreground" />
+          </div>
+          {isEditMode && (
+             <div className="flex items-center gap-3">
+               {retentionImageUrl && (
+                 <button onClick={() => { setRetentionImageUrl(''); saveToSupabase({ retentionImage: '' }); }} className="text-[11px] font-bold text-red-500">Remove Image</button>
+               )}
+               <label className="text-[11px] text-[hsl(var(--ig-blue))] font-bold flex items-center gap-1 cursor-pointer active:opacity-60">
+                 <Plus size={12} /> Upload Image
+                 <input 
+                   type="file" 
+                   accept="image/*" 
+                   className="hidden" 
+                   onChange={async (e) => {
+                     const file = e.target.files?.[0];
+                     if (!file) return;
+                     const tid = toast.loading("Uploading graph...");
+                     try {
+                       const url = await uploadToCloudinary(file);
+                       setRetentionImageUrl(url);
+                       saveToSupabase({ retentionImage: url });
+                       toast.success("Graph updated!", { id: tid });
+                     } catch (err) {
+                       toast.error("Upload failed", { id: tid });
+                     }
+                   }} 
+                 />
+               </label>
+             </div>
+          )}
         </div>
 
         {/* Phone mockup with thumbnail */}
@@ -970,19 +1009,22 @@ const ReelInsightsScreen = () => {
           </div>
         </div>
 
-        {/* Retention line chart — long-press 2s to edit */}
-        <div
-          className="relative h-[150px] select-none cursor-pointer"
-          onClick={() => isEditMode && setRetentionEditorOpen(true)}
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={editRetentionCurve} margin={{ top: 5, right: 5, left: -5, bottom: 0 }}>
-              <CartesianGrid horizontal={true} vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.3} />
-              <XAxis dataKey="t" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis fontSize={10} tickLine={false} axisLine={false} width={46} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(v: number) => v === 0 ? '0' : `${v}%`} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-              <Line type="linear" dataKey="pct" stroke="#E040FB" strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* Retention graph — long-press 2s to edit OR show uploaded image */}
+        <div className="relative select-none -mx-2">
+          {retentionImageUrl ? (
+            <img src={retentionImageUrl} alt="Retention graph" className="w-full h-auto object-contain rounded-lg shadow-sm" />
+          ) : (
+            <div className={cn("h-[150px]", isEditMode && "cursor-pointer active:opacity-80 transition-opacity")} onClick={() => isEditMode && setRetentionEditorOpen(true)}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={editRetentionCurve} margin={{ top: 5, right: 5, left: -5, bottom: 0 }}>
+                  <CartesianGrid horizontal={true} vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.3} />
+                  <XAxis dataKey="t" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis fontSize={10} tickLine={false} axisLine={false} width={46} domain={[0, 100]} ticks={[0, 50, 100]} tickFormatter={(v: number) => v === 0 ? '0' : `${v}%`} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <Line type="linear" dataKey="pct" stroke="#E040FB" strokeWidth={3} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
         {/* Divider */}
@@ -1403,19 +1445,6 @@ const ReelInsightsScreen = () => {
                         min="0"
                         className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
                       />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mb-3">
-                    <div className="flex-1">
-                      <label className="text-[10px] text-muted-foreground mb-0.5 block">Y-axis Top (e.g. 1000)</label>
-                      <input
-                        value={editYTop}
-                        onChange={(e) => setEditYTop(Math.max(0, parseInt(e.target.value) || 0))}
-                        type="number"
-                        min="0"
-                        className="w-full bg-secondary rounded-lg px-3 py-1.5 text-[13px] text-foreground outline-none text-center"
-                      />
-                      <p className="text-[9px] text-muted-foreground mt-0.5 text-center">Center line auto = {Math.round(editYTop / 2)}</p>
                     </div>
                   </div>
                   {/* Time Range Mode */}
