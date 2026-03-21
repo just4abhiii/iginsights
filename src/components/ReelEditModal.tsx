@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ImagePlus, X, Video, Loader2 } from "lucide-react";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import GraphEditorModal from "@/components/GraphEditorModal";
 import type { ExtendedPostItem } from "@/data/reelInsightsData";
 
@@ -107,10 +108,11 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
     if (videoUploading) return; // Don't save while uploading
     const fixedData = { ...data };
     fixedData.insights = { ...fixedData.insights, genderFemale: 100 - fixedData.insights.genderMale };
-    // Explicitly preserve music fields
-    fixedData.musicTitle = data.musicTitle || "";
-    fixedData.musicIcon = data.musicIcon || "";
-    fixedData.caption = data.caption || "";
+    // Explicitly preserve music fields - but only if they exist
+    if (data.musicTitle) fixedData.musicTitle = data.musicTitle;
+    if (data.musicIcon) fixedData.musicIcon = data.musicIcon;
+    if (data.caption) fixedData.caption = data.caption;
+    
     // Auto-generate thumbnail from streamable video URL only if no custom thumbnail set
     if (fixedData.videoUrl?.includes("streamable.com") && !fixedData.thumbnail) {
       const videoId = fixedData.videoUrl.split("/").pop();
@@ -234,12 +236,13 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    if (file.size > 2 * 1024 * 1024) { alert("Image must be under 2MB"); return; }
+                    if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB"); return; }
                     try {
                       const url = await uploadToCloudinary(file);
                       setData((prev) => prev ? { ...prev, musicIcon: url } : prev);
                     } catch (err) {
                       console.warn('[MusicIcon] Cloudinary failed, using base64 fallback', err);
+                      toast.error("Cloudinary upload failed, using temporary local storage");
                       const reader = new FileReader();
                       reader.onload = (ev) => setData((prev) => prev ? { ...prev, musicIcon: ev.target?.result as string } : prev);
                       reader.readAsDataURL(file);
@@ -292,8 +295,8 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                if (file.size > 50 * 1024 * 1024) {
-                  alert("Video must be under 50MB");
+                if (file.size > 100 * 1024 * 1024) {
+                  alert("Video must be under 100MB");
                   return;
                 }
 
@@ -310,6 +313,7 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
                   console.log("[VideoUpload] Cloudinary success:", url);
                 } catch (err: any) {
                   console.warn("[VideoUpload] Cloudinary failed, keeping blob URL:", err?.message);
+                  toast.error("Video Cloudinary upload failed. Video will only work in this session.");
                   // blob URL already set — works for current session
                 } finally {
                   setTimeout(() => {
@@ -377,8 +381,8 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                if (file.size > 5 * 1024 * 1024) {
-                  alert("Image must be under 5MB");
+                if (file.size > 10 * 1024 * 1024) {
+                  alert("Image must be under 10MB");
                   return;
                 }
                 // Upload to Cloudinary
@@ -388,6 +392,7 @@ const ReelEditModal = ({ open, onClose, reel, reelIndex, onSave, onDelete }: Ree
                   console.log('[ThumbUpload] Cloudinary success:', url);
                 } catch (err) {
                   console.warn('[ThumbUpload] Cloudinary failed, using base64 fallback:', err);
+                  toast.error("Thumbnail Cloudinary upload failed. Fallback to local base64.");
                   const reader = new FileReader();
                   reader.onload = (ev) => {
                     setData((prev) => prev ? { ...prev, thumbnail: ev.target?.result as string } : prev);

@@ -169,10 +169,10 @@ export const saveReelsData = (reels: ExtendedPostItem[]) => {
     // These are already uploaded to Supabase Storage with permanent URLs
     const cleaned = reels.map(r => {
       const copy = { ...r };
-      if (copy.thumbnail?.startsWith('data:') || copy.thumbnail?.startsWith('blob:')) {
+      if (copy.thumbnail?.startsWith('blob:')) {
         copy.thumbnail = '';
       }
-      if (copy.musicIcon?.startsWith('data:') || copy.musicIcon?.startsWith('blob:')) {
+      if (copy.musicIcon?.startsWith('blob:')) {
         copy.musicIcon = '';
       }
       if (copy.videoUrl?.startsWith('blob:')) {

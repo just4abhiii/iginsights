@@ -4,8 +4,8 @@
  * Unsigned uploads — works directly from browser, no server needed
  */
 
-const CLOUD_NAME = "daw0eptv5";
-const UPLOAD_PRESET = "darksidex";
+const CLOUD_NAME = "da6qm96tt";
+const UPLOAD_PRESET = "darksidex_reel";
 
 const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`;
 
@@ -42,22 +42,27 @@ export async function uploadToCloudinary(
             }
         };
 
+        xhr.timeout = 60000; // 60s timeout
+        xhr.ontimeout = () => reject(new Error("Upload timed out after 60 seconds"));
+
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     const data: CloudinaryResponse = JSON.parse(xhr.responseText);
                     console.log("[Cloudinary] Upload success:", data.secure_url);
                     resolve(data.secure_url);
-                } catch {
+                } catch (e) {
+                    console.error("[Cloudinary] Invalid response JSON:", xhr.responseText);
                     reject(new Error("Invalid response from Cloudinary"));
                 }
             } else {
                 console.error("[Cloudinary] Upload failed:", xhr.status, xhr.responseText);
-                reject(new Error(`Upload failed: ${xhr.status}`));
+                reject(new Error(`Upload failed: ${xhr.status} ${xhr.responseText}`));
             }
         };
 
-        xhr.onerror = () => {
+        xhr.onerror = (e) => {
+            console.error("[Cloudinary] Network error:", e);
             reject(new Error("Network error during upload"));
         };
 

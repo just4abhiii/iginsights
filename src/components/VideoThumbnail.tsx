@@ -99,7 +99,7 @@ const VideoThumbnail = ({ videoUrl, fallbackThumbnail, className = "", alt = "" 
   }
 
   // For direct video URLs (.mp4 etc), show first frame using video element
-  const isVideo = videoUrl.match(/\.(mp4|webm|mov|ogg)(\?|$)/i) || videoUrl.includes("video");
+  const isVideo = videoUrl.match(/\.(mp4|webm|mov|ogg)(\?|$)/i) || videoUrl.includes("video") || videoUrl.startsWith("blob:");
   
   if (isVideo) {
     return (
