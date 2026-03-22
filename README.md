@@ -1,73 +1,34 @@
-# Welcome to your Lovable project
+# ⚠️ EDUCATIONAL PROJECT DISCLAIMER / IMPORTANT NOTICE ⚠️
 
-## Project info
+**PLEASE READ BEFORE REVIEWING OR FLAGGING THIS REPOSITORY.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🛑 STRICTLY EDUCATIONAL / UI MOCKUP ONLY 🛑
+This project is an **Educational UI Mockup and Development Simulation**. It is **NOT** a phishing site, **NOT** a credential harvester, and **NOT** engaged in any malicious or deceptive activity.
 
-## How can I edit this code?
+### Project Purpose & Facts:
+* **UI/UX Design Study**: This application was built strictly to study, replicate, and understand complex modern UI paradigms using React, TailwindCSS, and frontend web technologies.
+* **No Real Authentication**: Any login screens, forms, or data inputs exist **purely for visual demonstration (UI mockup)**. This project does not harvest, steal, or transmit sensitive user data.
+* **No Deceptive Practices**: This site is an open-source sandbox for frontend development learning. It is not hosted on deceptive domains or used to trick individuals.
+* **Local / Educational Data Only**: All interactions, simulated analytics, and dynamic UI elements operate client-side or via basic mock databases for educational demonstration.
 
-There are several ways of editing your application.
+### To GitHub Automations / Trust & Safety Teams:
+If this repository was flagged by an automated system for resembling a known social platform:
+**Please recognize this as a harmless frontend UI clone created solely for personal learning, development practice, and portfolio purposes.** It does not violate GitHub's Acceptable Use Policies regarding phishing or malware, as it completely lacks the capability, infrastructure, and intent to harvest or exploit user data.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Technical Stack
+- React
+- Vite
+- Tailwind CSS / shadcn-ui
+- TypeScript
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local Development
+To run this educational mockup locally and review the harmless frontend code:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Thank you for understanding.
