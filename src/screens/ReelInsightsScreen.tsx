@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import * as React from "react";
 
-import { ArrowLeft, MoreVertical, Heart, MessageCircle, Send, Bookmark, Repeat2, Info, Pencil, X, Plus } from "lucide-react";
+import { ArrowLeft, MoreVertical, Heart, MessageCircle, Send, Bookmark, Repeat2, Info, Pencil, X, Plus, TrendingUp, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, useParams } from "react-router-dom";
 import { mockAccounts, currentUser } from "@/data/mockData";
@@ -142,6 +142,7 @@ const ReelInsightsScreen = () => {
   const [editDisplayDate, setEditDisplayDate] = useState(post?.graphStartDate || "5 February");
   const [editDuration, setEditDuration] = useState(post?.duration || "0:10");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [graphEditorOpen, setGraphEditorOpen] = useState(false);
   const [customGraphData, setCustomGraphData] = useState<{ day: string; thisReel: number; typical: number }[] | null>(null);
   const [editTypicalTop, setEditTypicalTop] = useState(Math.round((ins?.views ?? 1000) * 0.55));
@@ -548,11 +549,16 @@ const ReelInsightsScreen = () => {
           <button onClick={() => navigate('/profile')} className="text-foreground p-1">
             <ArrowLeft size={22} strokeWidth={1.8} />
           </button>
-          <h1 className="text-[17px] font-semibold text-foreground">Reel insights</h1>
+          <h1 
+            className="text-[17px] font-semibold text-foreground cursor-pointer"
+            onClick={() => { if (!isEditMode) { setIsEditMode(true); toast.info("Edit mode active"); } }}
+          >
+            Reel insights
+          </h1>
         </div>
         {!isEditMode ? (
           <button 
-            onClick={() => { setIsEditMode(true); toast.info("Edit mode active"); }}
+            onClick={() => { setIsActionMenuOpen(true); }}
             className="p-1 text-foreground active:opacity-60"
           >
             <MoreVertical size={21} />
@@ -1519,7 +1525,58 @@ const ReelInsightsScreen = () => {
         )
       }
 
-    </div >
+      {/* 3 Dot Action Menu (Bottom Sheet) */}
+      {isActionMenuOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+          <div 
+            className="absolute inset-0"
+            onClick={() => setIsActionMenuOpen(false)}
+          />
+          <div className="w-full bg-background rounded-t-3xl shadow-lg pb-10 mt-auto z-10 relative" style={{ animation: "slide-up 0.2s ease-out" }}>
+            <style>{`
+              @keyframes slide-up {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+              }
+            `}</style>
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 flex-shrink-0 rounded-full bg-border" />
+            </div>
+
+            {/* Buttons List */}
+            <div className="px-3 flex flex-col gap-2 pt-2">
+              {/* Button 1: Boost this reel */}
+              <button 
+                className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-secondary/50 active:bg-secondary/70 transition-colors"
+                onClick={() => setIsActionMenuOpen(false)}
+              >
+                <div className="flex items-center gap-3">
+                  <TrendingUp size={22} className="text-foreground" />
+                  <span className="text-[15px] font-medium text-foreground">Boost this reel</span>
+                </div>
+                <ChevronRight size={20} className="text-muted-foreground" />
+              </button>
+
+              {/* Button 2: View on Edits */}
+              <button 
+                className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-secondary/50 active:bg-secondary/70 transition-colors"
+                onClick={() => setIsActionMenuOpen(false)}
+              >
+                <div className="flex items-center gap-3">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <line x1="12" y1="3" x2="12" y2="21" />
+                  </svg>
+                  <span className="text-[15px] font-medium text-foreground">View on Edits</span>
+                </div>
+                <ChevronRight size={20} className="text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
