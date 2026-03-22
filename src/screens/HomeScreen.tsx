@@ -170,6 +170,7 @@ const HomeScreen = () => {
                   mockAccounts["just4abhii"]?.profile?.avatar ||
                   currentUser.avatar ||
                   story.avatar,
+                storyNote: mockAccounts["just4abhii"]?.storyNote || story.storyNote,
               }
               : story;
             return (

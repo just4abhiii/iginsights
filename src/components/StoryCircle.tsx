@@ -30,8 +30,20 @@ const StoryCircle = ({ story, onClick }: StoryCircleProps) => (
         </div>
       </div>
       {story.isOwn && (
-        <div className="absolute bottom-[2px] right-[2px] flex h-[20px] w-[20px] items-center justify-center rounded-full border-[2px] border-background bg-foreground text-background">
-          <Plus size={11} strokeWidth={3} />
+        <div className="absolute bottom-[2px] right-[2px] flex h-[20px] w-[20px] items-center justify-center rounded-full border-[2px] border-background bg-[#0095F6] text-white">
+          <Plus size={12} strokeWidth={3} />
+        </div>
+      )}
+      {story.storyNote && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 animate-in fade-in zoom-in duration-300">
+          <div className="relative bg-white dark:bg-[#262626] border border-black/5 dark:border-white/10 rounded-[18px] px-3.5 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-[50px] max-w-[95px]">
+            <p className="text-[11px] leading-tight text-foreground line-clamp-2 text-center font-normal">
+              {story.storyNote}
+            </p>
+            {/* Thought bubble tails (circles) */}
+            <div className="absolute -bottom-[3px] left-[45%] w-[8px] h-[8px] rounded-full bg-white dark:bg-[#262626] border-b border-black/5 dark:border-white/10" />
+            <div className="absolute -bottom-[7px] left-[40%] w-[5px] h-[5px] rounded-full bg-white dark:bg-[#262626] border-b border-black/5 dark:border-white/10" />
+          </div>
         </div>
       )}
       {story.isLive && (

@@ -5,6 +5,7 @@ export interface Story {
   isOwn?: boolean;
   hasStory?: boolean;
   isLive?: boolean;
+  storyNote?: string;
 }
 
 export interface Post {
