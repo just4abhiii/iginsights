@@ -689,13 +689,15 @@ const ProfileScreen = () => {
           <div className="relative flex-shrink-0 flex flex-col items-center mt-10">
             {/* Notes bubble overlapping avatar */}
             {account.storyNote && (
-              <div className="absolute -top-[22px] left-1/2 -translate-x-1/2 z-10 w-max">
-                <div className="bg-background dark:bg-[#262626] rounded-[14px] px-2.5 py-1 max-w-[105px] shadow-sm border border-border/60 dark:border-[#363636]">
-                  <p className="text-[12px] font-normal text-foreground text-center leading-snug break-words">{account.storyNote}</p>
+              <div className="absolute -top-[18px] left-1/2 -translate-x-1/2 z-10 w-max animate-in fade-in zoom-in duration-300 pointer-events-none">
+                <div className="relative bg-white dark:bg-[#262626] border border-black/5 dark:border-white/10 rounded-[18px] px-3.5 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.15)] min-w-[50px] max-w-[100px]">
+                  <p className="text-[11px] leading-tight text-foreground line-clamp-2 text-center font-normal">
+                    {account.storyNote}
+                  </p>
+                  {/* Thought bubble tails (circles) - themed */}
+                  <div className="absolute -bottom-[3px] left-[52%] w-[8px] h-[8px] rounded-full bg-white dark:bg-[#262626] border-b border-r border-black/5 dark:border-white/10" />
+                  <div className="absolute -bottom-[8px] left-[46%] w-[5px] h-[5px] rounded-full bg-white dark:bg-[#262626] border-b border-r border-black/5 dark:border-white/10" />
                 </div>
-                {/* Triangle pointer */}
-                <div className="absolute -bottom-[5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-border/60 dark:border-t-[#363636]" />
-                <div className="absolute -bottom-[4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-background dark:border-t-[#262626]" />
               </div>
             )}
             <div className="rounded-full border-[2.5px] border-muted-foreground/30 p-[2.5px]">
