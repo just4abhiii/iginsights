@@ -135,6 +135,7 @@ const ReelInsightsScreen = () => {
   const [editComments, setEditComments] = useState(ins?.comments ?? 11);
   const [editShares, setEditShares] = useState(ins?.shares ?? 2);
   const [editSaves, setEditSaves] = useState(ins?.saves ?? 8);
+  const [editReposts, setEditReposts] = useState(ins?.reposts ?? 0);
   const [editFollowerPct, setEditFollowerPct] = useState(ins?.followerViewsPct ?? 89);
   const [editGenderMale, setEditGenderMale] = useState(ins?.genderMale ?? 92);
   const [editViewRate, setEditViewRate] = useState(ins?.viewRatePast3Sec ?? 42);
@@ -217,7 +218,7 @@ const ReelInsightsScreen = () => {
   const saveToSupabase = useCallback(async (overrides?: Record<string, unknown>) => {
     const data = {
       views: editViews, likes: editLikes, comments: editComments,
-      shares: editShares, saves: editSaves,
+      shares: editShares, saves: editSaves, reposts: editReposts,
       followerViewsPct: editFollowerPct, genderMale: editGenderMale,
       viewRatePast3Sec: editViewRate,
       typicalViewRate: editTypicalViewRate,
@@ -254,7 +255,7 @@ const ReelInsightsScreen = () => {
       console.warn('[Supabase] Save failed, using localStorage only:', e);
     }
   }, [
-    editViews, editLikes, editComments, editShares, editSaves,
+    editViews, editLikes, editComments, editShares, editSaves, editReposts,
     editFollowerPct, editGenderMale, editViewRate,
     editStartDate, editDisplayDate, editDuration,
     editWatchTime, editAvgWatchTime,
@@ -282,6 +283,7 @@ const ReelInsightsScreen = () => {
         if (d.comments != null) setEditComments(d.comments as number);
         if (d.shares != null) setEditShares(d.shares as number);
         if (d.saves != null) setEditSaves(d.saves as number);
+        if (d.reposts != null) setEditReposts(d.reposts as number);
         if (d.followerViewsPct != null) setEditFollowerPct(d.followerViewsPct as number);
         if (d.genderMale != null) setEditGenderMale(d.genderMale as number);
         if (d.viewRatePast3Sec != null) setEditViewRate(d.viewRatePast3Sec as number);
@@ -351,6 +353,7 @@ const ReelInsightsScreen = () => {
   const comments = editComments;
   const shares = editShares;
   const saves = editSaves;
+  const reposts = editReposts;
   const followerPct = editFollowerPct;
   const nonFollowerPct = 100 - followerPct;
   const viewRate = editViewRate;
@@ -379,18 +382,11 @@ const ReelInsightsScreen = () => {
 
   const viewsOverTimeAll = useMemo(() => {
     if (customGraphData) {
-      // Calculate current max values in the custom drawn data
-      const maxThisReel = Math.max(...customGraphData.map(d => d.thisReel), 1);
-      const maxTypical = Math.max(...customGraphData.map(d => d.typical), 1);
-      
       const labeled = customGraphData.map((d, i) => {
         const labelIdx = i === 0 ? 0 : i === 2 ? 1 : i === 4 ? 2 : -1;
         return { 
           ...d, 
-          day: labelIdx >= 0 ? effectiveXLabels[labelIdx] : "",
-          // Automatically scale drawing to exactly match current editViews and editTypicalTop!
-          thisReel: Math.round((d.thisReel / maxThisReel) * editViews),
-          typical: Math.round((d.typical / maxTypical) * editTypicalTop)
+          day: labelIdx >= 0 ? effectiveXLabels[labelIdx] : d.day,
         };
       });
       return labeled;
@@ -435,6 +431,7 @@ const ReelInsightsScreen = () => {
       comments: editComments,
       shares: editShares,
       saves: editSaves,
+      reposts: editReposts,
       followerViewsPct: editFollowerPct,
       genderMale: editGenderMale,
       genderFemale: 100 - editGenderMale,
@@ -473,7 +470,7 @@ const ReelInsightsScreen = () => {
     freshData[postIndex] = reel;
     saveReelsData(freshData);
     console.log("[InsightsPersist] Saved edits for reel", postIndex);
-  }, [isMainAccount, postIndex, editViews, editLikes, editComments, editShares, editSaves, editFollowerPct, editGenderMale, editViewRate, editStartDate, editDuration, editXDate1, editXDate2, editXDate3, customGraphData, editYCenter, editYTop, editSkipRate, editTypicalSkipRate, editRetentionCurve, editWatchTime, editAvgWatchTime, showGraph, editSources, editCountries, editAgeGroups, editAccountsReached, editFollows, postImage, postCaption, postVideoUrl]);
+  }, [isMainAccount, postIndex, editViews, editLikes, editComments, editShares, editSaves, editReposts, editFollowerPct, editGenderMale, editViewRate, editStartDate, editDuration, editXDate1, editXDate2, editXDate3, customGraphData, editYCenter, editYTop, editSkipRate, editTypicalSkipRate, editRetentionCurve, editWatchTime, editAvgWatchTime, showGraph, editSources, editCountries, editAgeGroups, editAccountsReached, editFollows, postImage, postCaption, postVideoUrl]);
 
   // Auto-persist edits to localStorage (skip initial mount)
   const hasMounted = useRef(false);
@@ -678,12 +675,7 @@ const ReelInsightsScreen = () => {
         {/* Repost — custom SVG matching Instagram */}
         <div 
           className="flex flex-col items-center gap-1.5 cursor-pointer"
-          onClick={() => isEditMode && setEditModal({ label: "Reposts", value: String(ins?.reposts || 0), onSave: (v) => {
-            const data = loadReelsData();
-            data[postIndex].insights = { ...data[postIndex].insights, reposts: v };
-            saveReelsData(data);
-            persistEdits();
-          }})}
+          onClick={() => isEditMode && setEditModal({ label: "Reposts", value: String(reposts), onSave: setEditReposts })}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-foreground">
             <polyline points="17 1 21 5 17 9" />
@@ -691,7 +683,7 @@ const ReelInsightsScreen = () => {
             <polyline points="7 23 3 19 7 15" />
             <path d="M21 12v3a4 4 0 0 1-4 4H3" />
           </svg>
-          <span className="text-[13px] font-medium text-foreground">{fmtNum(ins?.reposts || 0)}</span>
+          <span className="text-[13px] font-medium text-foreground">{fmtNum(reposts)}</span>
         </div>
         {/* Bookmark */}
         <div 
