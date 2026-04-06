@@ -40,9 +40,14 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem("darksidex_splash_shown");
+  });
   const [authed, setAuthed] = useState(() => isAuthenticated());
-  const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+  const handleSplashFinish = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem("darksidex_splash_shown", "true");
+  }, []);
 
   useEffect(() => {
     if (!authed) {

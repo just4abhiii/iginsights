@@ -6,7 +6,13 @@
 const AUTH_STORAGE_KEY = "darksidex_auth_session";
 
 // ==================== DEVICE FINGERPRINT ====================
+const DEVICE_ID_KEY = "darksidex_device_id";
+
 export function getDeviceFingerprint(): string {
+    // Check if we already have a persistent ID on this device/browser
+    const existingId = localStorage.getItem(DEVICE_ID_KEY);
+    if (existingId) return existingId;
+
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -35,7 +41,12 @@ export function getDeviceFingerprint(): string {
         hash = (hash << 5) - hash + char;
         hash |= 0;
     }
-    return "DX-" + Math.abs(hash).toString(36).toUpperCase().padStart(8, "0");
+    const newId = "DX-" + Math.abs(hash).toString(36).toUpperCase().padStart(8, "0");
+    
+    // Store it permanently on this browser
+    localStorage.setItem(DEVICE_ID_KEY, newId);
+    
+    return newId;
 }
 
 // ==================== SESSION MANAGEMENT ====================
