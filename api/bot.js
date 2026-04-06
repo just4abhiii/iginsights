@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const ADMIN_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "8236323612"; // User's chat id
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8371268102:AAEt0kfGyixOZyPiHGvuvn7ztOCndzZ7UCA"; // Provide by user in screenshot
+const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "8679302654:AAElCbMtg1Op9U1m7jfPH0_4G0Ri1cJpaRw";
 
 export default async function handler(req, res) {
     if (req.method === "OPTIONS") return res.status(200).end();
@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
         // 1. Strict Authorization Check
         if (chatId !== ADMIN_CHAT_ID) {
-            console.warn(`Unauthorized access attempt from ${chatId}`);
+            await reply(chatId, `⚠️ Unauthorized access! Your Chat ID is: <code>${chatId}</code>\nPlease update ADMIN_CHAT_ID in the code.`);
             return res.status(200).send("OK");
         }
 

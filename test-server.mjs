@@ -1,19 +1,19 @@
 // Local test server for API endpoints
 // Run with: node test-server.mjs
 import { createServer } from 'http';
-import { Redis } from '@upstash/redis';
 import { config } from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
-// Load .env.local
+// Load both .env and .env.local (later one wins on conflicts)
+config({ path: '.env' });
 config({ path: '.env.local' });
 
-const redis = new Redis({
-    url: process.env.KV_REST_API_URL,
-    token: process.env.KV_REST_API_TOKEN,
-});
+// ── Supabase setup ──
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 
-const ADMIN_PASS = "xbhi0000";
-
+// ── Key gen util ──
 function generateKey() {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const segs = [];
@@ -35,107 +35,146 @@ const server = createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return res.writeHead(204).end();
 
     const url = new URL(req.url, `http://localhost:3001`);
-    if (!url.pathname.startsWith('/api/keys')) {
-        return res.writeHead(404).end(JSON.stringify({ error: 'Not found' }));
-    }
+    const path = url.pathname;
 
     const json = (status, data) => {
         res.writeHead(status, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(data));
     };
 
-    const isAdmin = () => {
-        const auth = req.headers.authorization;
-        if (auth?.startsWith('Bearer ')) return auth.slice(7) === ADMIN_PASS;
-        return url.searchParams.get('admin') === ADMIN_PASS;
-    };
-
     let body = '';
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
         body = await new Promise(r => { let d = ''; req.on('data', c => d += c); req.on('end', () => r(d)); });
     }
-    const reqBody = body ? JSON.parse(body) : {};
+    let reqBody = {};
+    try { reqBody = body ? JSON.parse(body) : {}; } catch { }
 
     try {
-        if (req.method === 'GET') {
-            if (!isAdmin()) return json(401, { error: 'Unauthorized' });
-            const allKeys = await redis.smembers('keys:all') || [];
-            const keys = [];
-            for (const k of allKeys) {
-                const data = await redis.get(`key:${k}`);
-                if (data) keys.push(typeof data === 'string' ? JSON.parse(data) : data);
+        // ── /api/check-key-status  (used by KeyGuard + validateAndLogin) ──
+        if (path === '/api/check-key-status') {
+            if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+
+            const { key, deviceFingerprint } = reqBody;
+            if (!key || !deviceFingerprint) {
+                return json(400, { error: 'Key and device fingerprint required', valid: false });
             }
-            return json(200, { keys, adminPass: ADMIN_PASS });
+
+            if (!supabase) {
+                console.warn('⚠️  Supabase not configured – auto-approving key check (dev mode)');
+                return json(200, { valid: true });
+            }
+
+            // Lookup key in Supabase
+            const { data: keyData, error: findError } = await supabase
+                .from('access_keys')
+                .select('*')
+                .eq('key', key)
+                .single();
+
+            if (findError || !keyData) {
+                console.log(`❌ Key not found: ${key}`);
+                return json(404, { error: 'Invalid key', valid: false });
+            }
+
+            if (keyData.status !== 'active') {
+                return json(403, { error: `Key is ${keyData.status}`, valid: false });
+            }
+
+            if (keyData.expiry_date && new Date(keyData.expiry_date) < new Date()) {
+                await supabase.from('access_keys').update({ status: 'expired' }).eq('id', keyData.id);
+                return json(403, { error: 'Key expired', valid: false });
+            }
+
+            // Device lock
+            if (!keyData.device_id) {
+                await supabase.from('access_keys').update({ device_id: deviceFingerprint }).eq('id', keyData.id);
+                console.log(`🔐 Device locked for key: ${key}`);
+            } else if (keyData.device_id !== deviceFingerprint) {
+                return json(403, { error: 'Key is locked to another device', valid: false });
+            }
+
+            console.log(`✅ Key valid: ${key}`);
+            return json(200, { valid: true });
         }
 
-        if (req.method === 'POST') {
-            if (!isAdmin()) return json(401, { error: 'Unauthorized' });
-            const { label, days } = reqBody;
-            const key = generateKey();
-            const now = new Date();
-            const expiresAt = days === 0 ? null : new Date(now.getTime() + (days || 7) * 86400000).toISOString();
-            const keyData = {
-                key, label: label || `Key (${days || 7}d)`, createdAt: now.toISOString(),
-                expiresAt, active: true, deviceFingerprint: null, lastUsedAt: null,
-                maxDevices: 1, loginCity: null, loginCountry: null, loginIP: null,
+        // ── /api/bot  (Telegram bot webhook, proxied locally) ──
+        if (path === '/api/bot') {
+            if (req.method !== 'POST') return json(405, { error: 'Method not allowed' });
+            // Forward to bot handler logic inline
+            return json(200, { ok: true, note: 'Bot webhook received locally (no-op)' });
+        }
+
+        // ── /api/keys  (Admin key management) ──
+        if (path.startsWith('/api/keys')) {
+            const ADMIN_PASS = "xbhi0000";
+            const isAdmin = () => {
+                const auth = req.headers.authorization;
+                if (auth?.startsWith('Bearer ')) return auth.slice(7) === ADMIN_PASS;
+                return url.searchParams.get('admin') === ADMIN_PASS;
             };
-            await redis.set(`key:${key}`, JSON.stringify(keyData));
-            await redis.sadd('keys:all', key);
-            if (expiresAt) {
-                const ttl = Math.ceil((new Date(expiresAt).getTime() - now.getTime()) / 1000) + 86400;
-                await redis.expire(`key:${key}`, ttl);
+
+            if (!supabase) return json(500, { error: 'Supabase not configured' });
+
+            if (req.method === 'GET') {
+                if (!isAdmin()) return json(401, { error: 'Unauthorized' });
+                const { data, error } = await supabase.from('access_keys').select('*').order('created_at', { ascending: false });
+                if (error) return json(500, { error: error.message });
+                return json(200, { keys: data, adminPass: ADMIN_PASS });
             }
-            console.log(`✅ Created key: ${key} (${label}, ${days}d)`);
-            return json(201, { success: true, key: keyData });
+
+            if (req.method === 'POST') {
+                if (!isAdmin()) return json(401, { error: 'Unauthorized' });
+                const { label, days } = reqBody;
+                const newKey = generateKey();
+                const now = new Date();
+                const expiryDate = days === 0 ? null : new Date(now.getTime() + (days || 7) * 86400000).toISOString();
+                const { data, error } = await supabase.from('access_keys').insert([{
+                    key: newKey,
+                    expiry_date: expiryDate,
+                    status: 'active',
+                    label: label || `Key (${days || 7}d)`,
+                    created_at: now.toISOString(),
+                }]).select().single();
+                if (error) return json(500, { error: error.message });
+                console.log(`✅ Created key: ${newKey} (${label}, ${days}d)`);
+                return json(201, { success: true, key: data });
+            }
+
+            if (req.method === 'DELETE') {
+                if (!isAdmin()) return json(401, { error: 'Unauthorized' });
+                const k = url.searchParams.get('key');
+                if (!k) return json(400, { error: 'Key required' });
+                const { error } = await supabase.from('access_keys').delete().eq('key', k);
+                if (error) return json(500, { error: error.message });
+                console.log(`🗑️ Deleted: ${k}`);
+                return json(200, { success: true, deleted: k });
+            }
+
+            if (req.method === 'PATCH') {
+                if (!isAdmin()) return json(401, { error: 'Unauthorized' });
+                const { key: tk, active, status } = reqBody;
+                const newStatus = active === false ? 'revoked' : (status || 'active');
+                const { data, error } = await supabase.from('access_keys').update({ status: newStatus }).eq('key', tk).select().single();
+                if (error) return json(500, { error: error.message });
+                return json(200, { success: true, key: data });
+            }
+
+            return json(405, { error: 'Method not allowed' });
         }
 
-        if (req.method === 'PUT') {
-            const { accessKey, deviceFingerprint, city, country, ip } = reqBody;
-            if (!accessKey) return json(400, { error: 'Access key required' });
-            const normalizedKey = accessKey.trim().toUpperCase();
-            const raw = await redis.get(`key:${normalizedKey}`);
-            if (!raw) return json(404, { error: 'Invalid access key. Please check your key and try again.' });
-            const keyData = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            if (!keyData.active) return json(403, { error: 'Key deactivated. Contact support.' });
-            if (keyData.expiresAt && new Date(keyData.expiresAt) < new Date()) return json(403, { error: 'Key expired.' });
-            if (keyData.deviceFingerprint && keyData.deviceFingerprint !== deviceFingerprint)
-                return json(403, { error: 'Key linked to another device.' });
-            if (!keyData.deviceFingerprint && deviceFingerprint) keyData.deviceFingerprint = deviceFingerprint;
-            keyData.lastUsedAt = new Date().toISOString();
-            if (city) keyData.loginCity = city;
-            if (country) keyData.loginCountry = country;
-            if (ip) keyData.loginIP = ip;
-            await redis.set(`key:${normalizedKey}`, JSON.stringify(keyData));
-            console.log(`🔐 Login: ${normalizedKey} from ${city}, ${country}`);
-            return json(200, { success: true, key: keyData });
-        }
+        return json(404, { error: 'Not found' });
 
-        if (req.method === 'DELETE') {
-            if (!isAdmin()) return json(401, { error: 'Unauthorized' });
-            const k = url.searchParams.get('key');
-            if (!k) return json(400, { error: 'Key required' });
-            await redis.del(`key:${k}`);
-            await redis.srem('keys:all', k);
-            console.log(`🗑️ Deleted: ${k}`);
-            return json(200, { success: true, deleted: k });
-        }
-
-        if (req.method === 'PATCH') {
-            if (!isAdmin()) return json(401, { error: 'Unauthorized' });
-            const { key: tk, active } = reqBody;
-            const raw = await redis.get(`key:${tk}`);
-            if (!raw) return json(404, { error: 'Key not found' });
-            const kd = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            kd.active = active;
-            await redis.set(`key:${tk}`, JSON.stringify(kd));
-            return json(200, { success: true, key: kd });
-        }
-
-        json(405, { error: 'Method not allowed' });
     } catch (err) {
         console.error('Error:', err);
-        json(500, { error: 'Server error' });
+        json(500, { error: 'Server error: ' + err.message });
     }
 });
 
-server.listen(3001, () => console.log('🚀 API server running at http://localhost:3001'));
+server.listen(3001, () => {
+    console.log('🚀 API server running at http://localhost:3001');
+    if (supabase) {
+        console.log(`🗄️  Supabase connected: ${SUPABASE_URL}`);
+    } else {
+        console.warn('⚠️  Supabase NOT configured. Key checks will auto-approve in dev mode.');
+    }
+});
