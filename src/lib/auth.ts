@@ -96,6 +96,41 @@ export async function validateAndLogin(accessKey: string): Promise<LoginResult> 
                 deviceFingerprint: deviceFP,
                 loginAt: new Date().toISOString(),
             });
+
+            // --- Telegram Login Alert ---
+            try {
+                let ipInfo = { ip: "Unknown", city: "Unknown", country_name: "Unknown" };
+                try {
+                    const geoRes = await fetch("https://ipapi.co/json/");
+                    if (geoRes.ok) ipInfo = await geoRes.json();
+                } catch (e) {
+                    console.log("Could not fetch location", e);
+                }
+
+                const label = data.label || "User";
+                const timeStr = new Date().toLocaleString();
+
+                const message = `🔓 <b>New Login Alert!</b>
+────────────────
+📦 <b>User:</b> ${label}
+🔑 <b>Key:</b> <code>${normalizedKey}</code>
+📍 <b>Location:</b> ${ipInfo.city}, ${ipInfo.country_name}
+🌐 <b>IP:</b> <a href="http://ip-api.com/#${ipInfo.ip}">${ipInfo.ip}</a>
+📱 <b>Device:</b> <code>${deviceFP}</code>
+⏱ <b>Time:</b> ${timeStr}
+────────────────
+Powered by DarkSideX 🚀`;
+
+                await fetch("/api/telegram", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: message }),
+                });
+            } catch (alertErr) {
+                console.error("Failed to send login alert:", alertErr);
+            }
+            // -----------------------------
+
             return { success: true };
         }
 

@@ -3,7 +3,7 @@ const ADMIN_CHAT_ID = "8236323612";
 
 export default async function handler(req, res) {
     // Trim keys just in case
-    const supabaseUrl = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").trim();
+    const supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").trim();
     const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "").trim();
 
     res.setHeader("Access-Control-Allow-Origin", "*");

@@ -18,8 +18,18 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Key and device fingerprint required", valid: false });
     }
 
-    const supabaseUrl = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "").trim();
+    let supabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").trim();
     const supabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "").trim();
+
+    if (supabaseKey && supabaseKey.includes(".")) {
+        try {
+            const payloadStr = Buffer.from(supabaseKey.split(".")[1], 'base64').toString('utf8');
+            const payload = JSON.parse(payloadStr);
+            if (payload.ref) {
+                supabaseUrl = `https://${payload.ref}.supabase.co`;
+            }
+        } catch (e) {}
+    }
 
     if (!supabaseUrl || !supabaseKey) {
         // Fallback for development if not configured yet
@@ -64,7 +74,7 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: "Key is locked to another device", valid: false });
         }
 
-        return res.status(200).json({ valid: true });
+        return res.status(200).json({ valid: true, label: keyData.label || "User" });
     } catch (err) {
         return res.status(500).json({ error: "Internal server error", valid: false });
     }
