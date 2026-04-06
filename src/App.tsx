@@ -8,7 +8,7 @@ import AnalyticsTracker from "@/components/AnalyticsTracker";
 import InstallGate from "@/components/InstallGate";
 import SplashScreen from "@/components/SplashScreen";
 import LoginScreen from "@/screens/LoginScreen";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { isAuthenticated } from "@/lib/auth";
 import KeyGuard from "@/components/KeyGuard";
 import HomeScreen from "@/screens/HomeScreen";
@@ -43,6 +43,12 @@ const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [authed, setAuthed] = useState(() => isAuthenticated());
   const handleSplashFinish = useCallback(() => setShowSplash(false), []);
+
+  useEffect(() => {
+    if (!authed) {
+      (window as any).__removeSplash?.();
+    }
+  }, [authed]);
 
   const handleLoginSuccess = () => {
     setAuthed(true);
